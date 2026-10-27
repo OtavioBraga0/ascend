@@ -1,4 +1,4 @@
-import { CalendarDays, FileText, Settings } from "lucide-react";
+import { CalendarDays, FileText, ListChecks, Settings } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -7,8 +7,11 @@ import {
   PageHeader,
   PageHeaderSkeleton,
 } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 import { descreverPrazo, diasAte, formatarData } from "@/lib/datas";
+import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
+import { getResumoEdital } from "@/server/data/edital";
 
 export const metadata: Metadata = { title: "Painel · Ascend" };
 
@@ -20,12 +23,16 @@ export default function PainelPage({ params }: PageProps<"/concursos/[id]">) {
   );
 }
 
-// Provisório: os gráficos entram na etapa 7 e a importação do edital na etapa 5.
+// Provisório: os gráficos entram na etapa 7.
 async function Painel({
   params,
 }: Pick<PageProps<"/concursos/[id]">, "params">) {
   const { id } = await params;
-  const concurso = await requireConcurso(id);
+  const [user, concurso] = await Promise.all([
+    requireUser(),
+    requireConcurso(id),
+  ]);
+  const resumo = await getResumoEdital(user.id, id);
 
   return (
     <>
@@ -62,14 +69,36 @@ async function Painel({
             </p>
           )}
         </section>
-        <section className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center">
-          <FileText className="size-8 text-muted-foreground" aria-hidden />
-          <h2 className="font-medium">Importe o conteúdo programático</h2>
-          <p className="text-sm text-muted-foreground">
-            Em breve você poderá colar o edital aqui para gerar matérias e
-            tópicos.
-          </p>
-        </section>
+        {resumo.materias === 0 ? (
+          <section className="flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center">
+            <FileText className="size-8 text-muted-foreground" aria-hidden />
+            <h2 className="font-medium">Importe o conteúdo programático</h2>
+            <p className="text-sm text-muted-foreground">
+              Cole o texto do edital para gerar as matérias e os tópicos.
+            </p>
+            <Button
+              size="lg"
+              className="h-11"
+              render={<Link href={`/concursos/${id}/importar`} />}
+            >
+              Importar edital
+            </Button>
+          </section>
+        ) : (
+          <section className="flex items-center gap-3 rounded-xl border p-4">
+            <ListChecks className="size-5 text-muted-foreground" aria-hidden />
+            <p className="flex-1">
+              {resumo.materias} {resumo.materias === 1 ? "matéria" : "matérias"}{" "}
+              · {resumo.topicos} {resumo.topicos === 1 ? "tópico" : "tópicos"}
+            </p>
+            <Button
+              variant="outline"
+              render={<Link href={`/concursos/${id}/edital`} />}
+            >
+              Ver edital
+            </Button>
+          </section>
+        )}
       </main>
     </>
   );

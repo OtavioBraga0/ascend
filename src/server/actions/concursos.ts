@@ -41,7 +41,7 @@ export async function criarConcurso(
 
   const id = await concursos.createConcurso(user.id, parsed.data);
   revalidatePath("/concursos");
-  redirect(`/concursos/${id}`);
+  redirect(`/concursos/${id}/importar`);
 }
 
 export async function editarConcurso(
