@@ -46,6 +46,10 @@ Em produção, rode `npm run db:deploy` para aplicar as migrations.
 
 Login sem senha: o usuário informa o email e recebe um código de 6 dígitos (válido por 10 min), enviado pelo Gmail via OAuth2. O código é validado pelo callback do Auth.js (`/api/auth/callback/otp`). Limites: 3 envios e 5 tentativas de código por email a cada 15 minutos.
 
+## PWA
+
+O app é instalável (manifest em `src/app/manifest.ts`, ícones em `public/icons`). O service worker (`public/sw.js`) só é registrado em produção. Ele guarda os assets estáticos e mostra `/offline` quando não há rede. Para testar localmente, use `npm run build && npm start`.
+
 ## Scripts
 
 | Comando                           | O que faz                                      |

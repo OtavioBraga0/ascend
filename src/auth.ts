@@ -33,6 +33,8 @@ const otpProvider: EmailConfig = {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  // Na Vercel o host é confiável; fora dela, o Auth.js só confiaria com AUTH_URL definida.
+  trustHost: true,
   session: { strategy: "database" },
   providers: [otpProvider],
   pages: {

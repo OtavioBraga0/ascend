@@ -4,7 +4,7 @@ const SESSION_COOKIES = [
   "authjs.session-token",
   "__Secure-authjs.session-token",
 ];
-const PUBLIC_PATHS = ["/login", "/login/codigo"];
+const PUBLIC_PATHS = ["/login", "/login/codigo", "/offline"];
 
 /**
  * Checagem otimista: só verifica se existe cookie de sessão. A validação real
