@@ -18,8 +18,22 @@ const EXEMPLO = `LÍNGUA PORTUGUESA
 NOÇÕES DE DIREITO PENAL
 Infração penal; Tipicidade; Ilicitude.`;
 
-/** Passos 2 (colar o conteúdo programático) e 3 (revisar a estrutura). */
-export function ImportarEdital({ concursoId }: { concursoId: string }) {
+const AVISO_REIMPORTACAO =
+  "Salvar substitui a estrutura atual. Matérias e tópicos com o mesmo nome mantêm o progresso; os demais são apagados.";
+
+/**
+ * Passos 2 (colar o conteúdo programático) e 3 (revisar a estrutura) do novo
+ * concurso, ou a reimportação de um edital já salvo.
+ */
+export function ImportarEdital({
+  concursoId,
+  existentes = [],
+}: {
+  concursoId: string;
+  /** Matérias já salvas; se houver, é uma reimportação. */
+  existentes?: { id: string; nome: string; peso: number }[];
+}) {
+  const reimportacao = existentes.length > 0;
   const [texto, setTexto] = useState("");
   const [revisao, setRevisao] = useState<MateriaRevisao[] | null>(null);
   const [erro, setErro] = useState<string>();
@@ -33,17 +47,18 @@ export function ImportarEdital({ concursoId }: { concursoId: string }) {
       return;
     }
     setErro(undefined);
-    setRevisao(criarRevisao(materias, () => crypto.randomUUID()));
+    setRevisao(criarRevisao(materias, () => crypto.randomUUID(), existentes));
   }
 
   if (revisao) {
     return (
       <div className="space-y-6">
-        <Passos atual={3} />
+        {!reimportacao && <Passos atual={3} />}
         <RevisaoEdital
           concursoId={concursoId}
           inicial={revisao}
           onVoltar={() => setRevisao(null)}
+          aviso={reimportacao ? AVISO_REIMPORTACAO : undefined}
         />
       </div>
     );
@@ -51,7 +66,14 @@ export function ImportarEdital({ concursoId }: { concursoId: string }) {
 
   return (
     <div className="space-y-6">
-      <Passos atual={2} />
+      {reimportacao ? (
+        <p role="note" className="rounded-lg bg-muted px-3 py-2 text-sm">
+          {AVISO_REIMPORTACAO} Para só ajustar a estrutura atual, use “Editar
+          estrutura” nos ajustes.
+        </p>
+      ) : (
+        <Passos atual={2} />
+      )}
       <div className="space-y-2">
         <Label htmlFor="texto-edital">Conteúdo programático</Label>
         <p id="texto-edital-ajuda" className="text-sm text-muted-foreground">
@@ -88,21 +110,27 @@ export function ImportarEdital({ concursoId }: { concursoId: string }) {
         >
           Gerar estrutura
         </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          className="h-11"
-          onClick={() => setRevisao([])}
-        >
-          Montar manualmente
-        </Button>
+        {!reimportacao && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-11"
+            onClick={() => setRevisao([])}
+          >
+            Montar manualmente
+          </Button>
+        )}
       </div>
       <p className="text-center text-sm">
         <Link
-          href={`/concursos/${concursoId}`}
+          href={
+            reimportacao
+              ? `/concursos/${concursoId}/configuracoes`
+              : `/concursos/${concursoId}`
+          }
           className="text-muted-foreground underline-offset-4 hover:underline"
         >
-          Pular por enquanto
+          {reimportacao ? "Cancelar" : "Pular por enquanto"}
         </Link>
       </p>
     </div>

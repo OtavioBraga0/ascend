@@ -25,6 +25,24 @@ const titulos = (estado: MateriaRevisao[]) =>
     estado.map((m) => [m.nome, m.topicos.map((t) => t.titulo)]),
   );
 
+describe("criarRevisao", () => {
+  it("na reimportação herda id e peso da matéria com o mesmo nome", () => {
+    let n = 0;
+    const estado = criarRevisao(
+      [
+        { nome: "LÍNGUA PORTUGUESA", topicos: ["Crase"] },
+        { nome: "Nova", topicos: [] },
+      ],
+      () => `novo${++n}`,
+      [{ id: "mPort", nome: "Língua Portuguesa", peso: 4 }],
+    );
+    expect(estado.map((m) => [m.id, m.nome, m.peso])).toEqual([
+      ["mPort", "LÍNGUA PORTUGUESA", 4],
+      ["novo2", "Nova", 1],
+    ]);
+  });
+});
+
 describe("revisaoReducer", () => {
   it("cria o estado com peso 1 e ids únicos", () => {
     const estado = estadoInicial();

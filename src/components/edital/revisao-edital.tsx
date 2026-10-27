@@ -63,6 +63,8 @@ type Props = {
   concursoId: string;
   inicial: MateriaRevisao[];
   onVoltar: () => void;
+  /** Aviso sobre o que acontece com o progresso ao salvar (edição/reimportação). */
+  aviso?: string;
 };
 
 const PESOS = Array.from(
@@ -70,7 +72,7 @@ const PESOS = Array.from(
   (_, i) => PESO_MIN + i,
 );
 
-export function RevisaoEdital({ concursoId, inicial, onVoltar }: Props) {
+export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
   const [materias, dispatch] = useReducer(revisaoReducer, inicial);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [arrastandoId, setArrastandoId] = useState<string | null>(null);
@@ -147,10 +149,12 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar }: Props) {
   function salvar() {
     setErro(undefined);
     startSalvar(async () => {
+      // Os ids permitem ao servidor manter o progresso dos itens já salvos.
       const payload = materias.map((m) => ({
+        id: m.id,
         nome: m.nome,
         peso: m.peso,
-        topicos: m.topicos.map((t) => t.titulo),
+        topicos: m.topicos.map((t) => ({ id: t.id, titulo: t.titulo })),
       }));
       const resultado = await salvarEditalAction(concursoId, payload);
       if (resultado?.error) setErro(resultado.error);
@@ -178,6 +182,9 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar }: Props) {
           />{" "}
           para mover tópicos.
         </p>
+        {aviso && (
+          <p className="rounded-lg bg-muted px-3 py-2 text-sm">{aviso}</p>
+        )}
       </div>
 
       <DndContext

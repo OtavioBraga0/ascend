@@ -1,3 +1,4 @@
+import { normalizarBusca } from "@/lib/filtro-edital";
 import type { MateriaParseada } from "@/lib/parser-edital";
 
 export type TopicoRevisao = { id: string; titulo: string };
@@ -27,17 +28,28 @@ export type AcaoRevisao =
       indice: number;
     };
 
-/** Converte o resultado do parser em estado editável, gerando ids locais. */
+/**
+ * Converte o resultado do parser em estado editável, gerando ids locais.
+ * Na reimportação, matérias com o mesmo nome de uma existente herdam o id e o
+ * peso dela (o id permite ao servidor manter o progresso).
+ */
 export function criarRevisao(
   materias: MateriaParseada[],
   gerarId: () => string,
+  existentes: { id: string; nome: string; peso: number }[] = [],
 ): MateriaRevisao[] {
-  return materias.map((materia) => ({
-    id: gerarId(),
-    nome: materia.nome,
-    peso: PESO_MIN,
-    topicos: materia.topicos.map((titulo) => ({ id: gerarId(), titulo })),
-  }));
+  const livres = new Map(existentes.map((m) => [normalizarBusca(m.nome), m]));
+  return materias.map((materia) => {
+    const chave = normalizarBusca(materia.nome);
+    const existente = livres.get(chave);
+    livres.delete(chave);
+    return {
+      id: existente?.id ?? gerarId(),
+      nome: materia.nome,
+      peso: existente?.peso ?? PESO_MIN,
+      topicos: materia.topicos.map((titulo) => ({ id: gerarId(), titulo })),
+    };
+  });
 }
 
 export function revisaoReducer(
