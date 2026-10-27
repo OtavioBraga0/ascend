@@ -9,7 +9,18 @@ export const STATUS_ORDEM = [
   StatusTopico.REVISADO,
 ] as const;
 
-// Classes por extenso para o Tailwind encontrá-las no código.
+/** Cor de cada status como variável CSS (usada nos gráficos SVG). */
+export const STATUS_COR: Record<StatusTopico, string> = {
+  NAO_INICIADO: "var(--status-nao-iniciado)",
+  TEORIA: "var(--status-teoria)",
+  EXERCICIOS: "var(--status-exercicios)",
+  REVISADO: "var(--status-revisado)",
+};
+
+// Classes por extenso para o Tailwind encontrá-las no código. As cores das
+// marcas (ponto/barra) vêm dos tokens --status-* em globals.css, validados
+// para daltonismo nos temas claro e escuro; os chips usam tons com contraste
+// suficiente para texto.
 export const STATUS_INFO: Record<
   StatusTopico,
   { label: string; chip: string; ponto: string; barra: string }
@@ -17,25 +28,25 @@ export const STATUS_INFO: Record<
   NAO_INICIADO: {
     label: "Não iniciado",
     chip: "bg-muted text-muted-foreground",
-    ponto: "bg-zinc-400",
-    barra: "bg-zinc-300 dark:bg-zinc-600",
+    ponto: "bg-status-nao-iniciado",
+    barra: "bg-status-nao-iniciado",
   },
   TEORIA: {
     label: "Teoria",
-    chip: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-    ponto: "bg-sky-400",
-    barra: "bg-sky-300 dark:bg-sky-700",
+    chip: "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-100",
+    ponto: "bg-status-teoria",
+    barra: "bg-status-teoria",
   },
   EXERCICIOS: {
     label: "Exercícios",
-    chip: "bg-blue-600 text-white dark:bg-blue-500",
-    ponto: "bg-blue-600",
-    barra: "bg-blue-600 dark:bg-blue-500",
+    chip: "bg-blue-700 text-white dark:bg-blue-600",
+    ponto: "bg-status-exercicios",
+    barra: "bg-status-exercicios",
   },
   REVISADO: {
     label: "Revisado",
-    chip: "bg-green-600 text-white dark:bg-green-600",
-    ponto: "bg-green-600",
-    barra: "bg-green-600",
+    chip: "bg-green-700 text-white",
+    ponto: "bg-status-revisado",
+    barra: "bg-status-revisado",
   },
 };

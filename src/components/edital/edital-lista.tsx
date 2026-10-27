@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Link2, Search, StickyNote, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 
 import { StatusMenu } from "@/components/edital/status-menu";
@@ -42,19 +43,21 @@ export function EditalLista({ materias }: { materias: MateriaEdital[] }) {
     materiaId: string;
   } | null>(null);
 
-  // Link direto para uma matéria (#materia-<id>), usado pelo painel.
+  // Link direto para uma matéria (?materia=<id>), usado pelo painel. Lido a cada
+  // navegação, já que a tela pode voltar do cache sem remontar.
+  const materiaDestino = useSearchParams().get("materia");
+  const [destinoAnterior, setDestinoAnterior] = useState<string | null>(null);
+  if (materiaDestino !== destinoAnterior) {
+    setDestinoAnterior(materiaDestino);
+    if (materiaDestino)
+      setAbertas((atual) => new Set(atual).add(materiaDestino));
+  }
   useEffect(() => {
-    const id = decodeURIComponent(window.location.hash).replace(
-      /^#materia-/,
-      "",
-    );
-    if (!id || !materias.some((m) => m.id === id)) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- depende do hash, só disponível no cliente
-    setAbertas(new Set([id]));
+    if (!materiaDestino) return;
     requestAnimationFrame(() =>
-      document.getElementById(`materia-${id}`)?.scrollIntoView(),
+      document.getElementById(`materia-${materiaDestino}`)?.scrollIntoView(),
     );
-  }, [materias]);
+  }, [materiaDestino]);
 
   useEffect(() => {
     if (!erro) return;

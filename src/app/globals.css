@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-status-nao-iniciado: var(--status-nao-iniciado);
+  --color-status-teoria: var(--status-teoria);
+  --color-status-exercicios: var(--status-exercicios);
+  --color-status-revisado: var(--status-revisado);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -49,6 +53,11 @@
 }
 
 :root {
+  /* Status dos tópicos (validados para daltonismo; ver src/lib/status.ts) */
+  --status-nao-iniciado: #d4d4d8;
+  --status-teoria: #0ea5e9;
+  --status-exercicios: #1d4ed8;
+  --status-revisado: #16a34a;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -84,6 +93,10 @@
 }
 
 .dark {
+  --status-nao-iniciado: #52525b;
+  --status-teoria: #38bdf8;
+  --status-exercicios: #3b82f6;
+  --status-revisado: #22c55e;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

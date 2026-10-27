@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/server/auth";
 import { listConcursos } from "@/server/data/concursos";
+import { getProgressoConcursos } from "@/server/data/painel";
+import { progressoConcurso } from "@/lib/progresso";
 
 export const metadata: Metadata = { title: "Meus concursos · Ascend" };
 
@@ -33,7 +35,10 @@ export default function ConcursosPage() {
 
 async function ListaConcursos() {
   const user = await requireUser();
-  const concursos = await listConcursos(user.id);
+  const [concursos, progressos] = await Promise.all([
+    listConcursos(user.id),
+    getProgressoConcursos(user.id),
+  ]);
 
   if (concursos.length === 0) {
     return (
@@ -63,7 +68,14 @@ async function ListaConcursos() {
     <ul className="space-y-3 pb-20">
       {concursos.map((concurso) => (
         <li key={concurso.id}>
-          <ConcursoCard concurso={concurso} />
+          <ConcursoCard
+            concurso={concurso}
+            progresso={
+              progressos.has(concurso.id)
+                ? progressoConcurso(progressos.get(concurso.id)!)
+                : null
+            }
+          />
         </li>
       ))}
     </ul>
