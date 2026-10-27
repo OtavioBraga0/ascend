@@ -1,4 +1,4 @@
-// Schema do Ascend. Os modelos entram nas próximas etapas (ver SPEC.md, seção 4).
+// Schema do Ascend. Os modelos de domínio entram nas próximas etapas (ver SPEC.md, seção 4).
 
 generator client {
   provider = "prisma-client"
@@ -7,4 +7,59 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// Modelos do Auth.js
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Rate limit do login por OTP
+model AuthAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  kind      String // "send" | "verify"
+  createdAt DateTime @default(now())
+
+  @@index([email, kind, createdAt])
 }

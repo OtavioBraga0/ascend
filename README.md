@@ -23,6 +23,7 @@ cp .env.example .env
 # DATABASE_URL="postgresql://ascend:ascend@localhost:5433/ascend"
 # DIRECT_URL="postgresql://ascend:ascend@localhost:5433/ascend"
 # Gere o AUTH_SECRET com: npx auth secret   (ou: openssl rand -base64 32)
+# Sem as variáveis GMAIL_OAUTH_*, em desenvolvimento o código de login sai no console.
 
 # 3. Banco de dados
 docker compose up -d        # Postgres 17 na porta 5433
@@ -40,6 +41,10 @@ O Supabase é usado apenas como Postgres. Em **Project Settings → Database →
 - `DIRECT_URL`: conexão direta ou _Session pooler_ (porta 5432). É usada pelo Prisma CLI (`migrate`, `studio`).
 
 Em produção, rode `npm run db:deploy` para aplicar as migrations.
+
+## Login
+
+Login sem senha: o usuário informa o email e recebe um código de 6 dígitos (válido por 10 min), enviado pelo Gmail via OAuth2. O código é validado pelo callback do Auth.js (`/api/auth/callback/otp`). Limites: 3 envios e 5 tentativas de código por email a cada 15 minutos.
 
 ## Scripts
 

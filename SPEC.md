@@ -34,7 +34,7 @@ Mesmo assim, deixe o código organizado para que essas features entrem depois se
 | Banco     | PostgreSQL hospedado no Supabase (usado só como Postgres)                |
 | ORM       | Prisma                                                                   |
 | Auth      | Auth.js / NextAuth v5 com `@auth/prisma-adapter`, login por OTP no email |
-| Email     | Resend                                                                   |
+| Email     | Gmail (OAuth2) via Nodemailer — substitui o Resend                       |
 | Validação | Zod                                                                      |
 | Testes    | Vitest para lógica pura (parser, cálculo de progresso)                   |
 | Deploy    | Vercel                                                                   |
@@ -301,7 +301,7 @@ prisma/
 Faça em etapas, rodando lint, typecheck e testes ao fim de cada uma.
 
 1. ✅ **Setup** — Next.js + TS strict, Tailwind, shadcn/ui, ESLint/Prettier, Vitest, Prisma conectado ao Postgres, `.env.example`, README com instruções para rodar.
-2. **Auth OTP** — schema do Auth.js, provider Resend customizado, telas `/login` e `/login/codigo`, rate limit, middleware. Em desenvolvimento, se `AUTH_RESEND_KEY` não estiver definida, logar o código no console.
+2. ✅ **Auth OTP** — schema do Auth.js, provider Resend customizado, telas `/login` e `/login/codigo`, rate limit, middleware. Em desenvolvimento, se `AUTH_RESEND_KEY` não estiver definida, logar o código no console.
 3. **Layout mobile first** — app shell com navegação inferior/lateral, tema claro e escuro, PWA (manifest, ícones, service worker básico).
 4. **CRUD de concursos** — lista, criação (passo 1), edição, exclusão.
 5. **Parser + revisão do edital** — `parseEdital` com testes, telas dos passos 2 e 3, gravação em transação.
