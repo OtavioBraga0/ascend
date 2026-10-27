@@ -308,17 +308,17 @@ Faça em etapas, rodando lint, typecheck e testes ao fim de cada uma.
 6. ✅ **Edital e status** — lista por matéria, troca de status otimista, bottom sheet com nota e links, busca e filtros.
 7. ✅ **Progresso e painel** — `progresso.ts` com testes, os três gráficos, anéis em `/concursos`, "Continuar estudando".
 8. ✅ **Ajustes do concurso** — peso, prioridade, reordenação de matérias, reimportação.
-9. **Seed e polimento** — seed com um concurso de exemplo (Escrevente MP com algumas matérias e tópicos fictícios), estados vazios, loading skeletons, mensagens de erro, acessibilidade básica (labels, foco, contraste).
+9. ✅ **Seed e polimento** — seed com um concurso de exemplo (Escrevente MP com algumas matérias e tópicos fictícios), estados vazios, loading skeletons, mensagens de erro, acessibilidade básica (labels, foco, contraste).
 
 ## 11. Critérios de aceite do MVP
 
 - [ ] Login por email + código de 6 dígitos funciona no celular, com código expirando em 10 min e limite de tentativas.
-- [ ] Um usuário nunca consegue ver ou alterar dados de outro (testar trocando IDs na URL e nas actions).
-- [ ] Colar um conteúdo programático real gera matérias e tópicos coerentes, e o usuário consegue corrigir tudo antes de salvar.
-- [ ] Trocar o status de um tópico leva um toque para abrir e um para escolher, e reflete no painel.
-- [ ] O painel mostra anel geral, barras por matéria empilhadas por status e contagem regressiva.
+- [x] Um usuário nunca consegue ver ou alterar dados de outro (testar trocando IDs na URL e nas actions).
+- [x] Colar um conteúdo programático real gera matérias e tópicos coerentes, e o usuário consegue corrigir tudo antes de salvar.
+- [x] Trocar o status de um tópico leva um toque para abrir e um para escolher, e reflete no painel.
+- [x] O painel mostra anel geral, barras por matéria empilhadas por status e contagem regressiva.
 - [ ] Todas as telas funcionam bem em 375 px de largura; o app pode ser instalado na tela inicial do celular.
-- [ ] Testes de `parser-edital` e `progresso` passando; `tsc` e lint sem erros.
+- [x] Testes de `parser-edital` e `progresso` passando; `tsc` e lint sem erros.
 
 ## 12. Convenções
 

@@ -56,6 +56,7 @@ import {
   type MateriaRevisao,
   type TopicoRevisao,
 } from "@/lib/revisao-edital";
+import { chamarAction } from "@/lib/chamar-action";
 import { cn } from "@/lib/utils";
 import { salvarEditalAction } from "@/server/actions/edital";
 
@@ -156,7 +157,9 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
         peso: m.peso,
         topicos: m.topicos.map((t) => ({ id: t.id, titulo: t.titulo })),
       }));
-      const resultado = await salvarEditalAction(concursoId, payload);
+      const resultado = await chamarAction(() =>
+        salvarEditalAction(concursoId, payload),
+      );
       if (resultado?.error) setErro(resultado.error);
     });
   }

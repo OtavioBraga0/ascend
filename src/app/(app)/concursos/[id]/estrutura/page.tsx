@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { EditarEstrutura } from "@/components/edital/editar-estrutura";
-import {
-  PageHeader,
-  PageHeaderSkeleton,
-} from "@/components/layout/page-header";
+import { FormularioEsqueleto } from "@/components/layout/esqueletos";
+import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
 import { getEstruturaEdital } from "@/server/data/edital";
@@ -17,7 +15,7 @@ export default function EstruturaPage({
   params,
 }: PageProps<"/concursos/[id]/estrutura">) {
   return (
-    <Suspense fallback={<PageHeaderSkeleton />}>
+    <Suspense fallback={<FormularioEsqueleto />}>
       <Estrutura params={params} />
     </Suspense>
   );

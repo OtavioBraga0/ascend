@@ -27,7 +27,7 @@ export const STATUS_INFO: Record<
 > = {
   NAO_INICIADO: {
     label: "Não iniciado",
-    chip: "bg-muted text-muted-foreground",
+    chip: "bg-muted text-neutral-600 dark:text-neutral-300",
     ponto: "bg-status-nao-iniciado",
     barra: "bg-status-nao-iniciado",
   },

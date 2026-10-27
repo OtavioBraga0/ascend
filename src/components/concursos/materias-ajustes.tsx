@@ -5,6 +5,7 @@ import { useEffect, useOptimistic, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { Prioridade } from "@/generated/prisma/enums";
+import { chamarAction } from "@/lib/chamar-action";
 import { PESO_MAX, PESO_MIN } from "@/lib/revisao-edital";
 import {
   moverNaLista,
@@ -71,7 +72,7 @@ export function MateriasAjustes({
     setErro(undefined);
     startTransition(async () => {
       mudar(mudanca);
-      const resultado = await acao();
+      const resultado = await chamarAction(acao);
       if (resultado.error) setErro(resultado.error);
       else setAviso(mensagem);
     });

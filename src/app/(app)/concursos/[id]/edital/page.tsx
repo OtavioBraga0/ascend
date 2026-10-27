@@ -4,10 +4,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { EditalLista } from "@/components/edital/edital-lista";
-import {
-  PageHeader,
-  PageHeaderSkeleton,
-} from "@/components/layout/page-header";
+import { EditalEsqueleto } from "@/components/layout/esqueletos";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
@@ -19,7 +17,7 @@ export default function EditalPage({
   params,
 }: PageProps<"/concursos/[id]/edital">) {
   return (
-    <Suspense fallback={<PageHeaderSkeleton />}>
+    <Suspense fallback={<EditalEsqueleto />}>
       <Edital params={params} />
     </Suspense>
   );

@@ -31,6 +31,9 @@ npm run db:migrate          # aplica as migrations
 
 # 4. App
 npm run dev                 # http://localhost:3000
+
+# 5. (Opcional) concurso de exemplo para o seu email
+SEED_EMAIL=voce@email.com npm run db:seed
 ```
 
 ### Usando o Supabase
@@ -42,6 +45,11 @@ O Supabase é usado apenas como Postgres. Em **Project Settings → Database →
 
 Em produção, rode `npm run db:deploy` para aplicar as migrations.
 
+## Testes
+
+- `npm test`: testes unitários da lógica pura (parser do edital, progresso, datas, validações). Não precisam de banco.
+- `npm run test:integracao`: testes de isolamento entre usuários contra o Postgres de `DATABASE_URL`. Cada função de acesso a dados é chamada por um usuário com ids de outro. Use o banco local (`docker compose up -d`); os dados de teste são apagados ao final.
+
 ## Login
 
 Login sem senha: o usuário informa o email e recebe um código de 6 dígitos (válido por 10 min), enviado pelo Gmail via OAuth2. O código é validado pelo callback do Auth.js (`/api/auth/callback/otp`). Limites: 3 envios e 5 tentativas de código por email a cada 15 minutos.
@@ -52,18 +60,19 @@ O app é instalável (manifest em `src/app/manifest.ts`, ícones em `public/icon
 
 ## Scripts
 
-| Comando                           | O que faz                                      |
-| --------------------------------- | ---------------------------------------------- |
-| `npm run dev`                     | Servidor de desenvolvimento                    |
-| `npm run build`                   | Gera o Prisma Client e faz o build de produção |
-| `npm run lint`                    | ESLint                                         |
-| `npm run typecheck`               | `tsc --noEmit`                                 |
-| `npm test`                        | Testes (Vitest)                                |
-| `npm run format` / `format:check` | Prettier                                       |
-| `npm run db:migrate`              | Cria/aplica migrations em desenvolvimento      |
-| `npm run db:deploy`               | Aplica migrations em produção                  |
-| `npm run db:seed`                 | Popula o banco com dados de exemplo            |
-| `npm run db:studio`               | Prisma Studio                                  |
+| Comando                           | O que faz                                                  |
+| --------------------------------- | ---------------------------------------------------------- |
+| `npm run dev`                     | Servidor de desenvolvimento                                |
+| `npm run build`                   | Gera o Prisma Client e faz o build de produção             |
+| `npm run lint`                    | ESLint                                                     |
+| `npm run typecheck`               | `tsc --noEmit`                                             |
+| `npm test`                        | Testes unitários (Vitest)                                  |
+| `npm run test:integracao`         | Testes de isolamento contra o banco                        |
+| `npm run format` / `format:check` | Prettier                                                   |
+| `npm run db:migrate`              | Cria/aplica migrations em desenvolvimento                  |
+| `npm run db:deploy`               | Aplica migrations em produção                              |
+| `npm run db:seed`                 | Concurso de exemplo para `SEED_EMAIL` (pode rodar de novo) |
+| `npm run db:studio`               | Prisma Studio                                              |
 
 ## Estrutura
 

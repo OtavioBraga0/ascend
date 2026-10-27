@@ -59,7 +59,7 @@ function NavBar({ pathname }: { pathname: string | null }) {
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex h-16 flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground transition-colors outline-none",
-                  "focus-visible:bg-muted focus-visible:text-foreground",
+                  "focus-visible:bg-muted focus-visible:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
                   "md:h-10 md:flex-row md:justify-start md:gap-3 md:rounded-lg md:px-3 md:text-sm md:hover:bg-muted",
                   isActive && "text-foreground md:bg-muted",
                 )}

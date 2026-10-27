@@ -6,10 +6,8 @@ import { Suspense } from "react";
 import { ConcursoForm } from "@/components/concursos/concurso-form";
 import { ExcluirConcurso } from "@/components/concursos/excluir-concurso";
 import { MateriasAjustes } from "@/components/concursos/materias-ajustes";
-import {
-  PageHeader,
-  PageHeaderSkeleton,
-} from "@/components/layout/page-header";
+import { FormularioEsqueleto } from "@/components/layout/esqueletos";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { dataParaIso } from "@/lib/datas";
 import { editarConcurso } from "@/server/actions/concursos";
@@ -23,7 +21,7 @@ export default function ConfiguracoesPage({
   params,
 }: PageProps<"/concursos/[id]/configuracoes">) {
   return (
-    <Suspense fallback={<PageHeaderSkeleton />}>
+    <Suspense fallback={<FormularioEsqueleto />}>
       <Configuracoes params={params} />
     </Suspense>
   );

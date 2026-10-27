@@ -21,14 +21,14 @@ export default function ConcursosPage() {
         <Suspense fallback={<ListaSkeleton />}>
           <ListaConcursos />
         </Suspense>
+        <Link
+          href="/concursos/novo"
+          className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-full bg-primary px-5 font-medium text-primary-foreground shadow-lg outline-none hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 md:right-8 md:bottom-8"
+        >
+          <Plus className="size-5" aria-hidden />
+          Novo concurso
+        </Link>
       </main>
-      <Link
-        href="/concursos/novo"
-        className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-full bg-primary px-5 font-medium text-primary-foreground shadow-lg outline-none hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 md:right-8 md:bottom-8"
-      >
-        <Plus className="size-5" aria-hidden />
-        Novo concurso
-      </Link>
     </>
   );
 }

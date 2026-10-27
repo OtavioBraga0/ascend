@@ -3,10 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import {
-  PageHeader,
-  PageHeaderSkeleton,
-} from "@/components/layout/page-header";
+import { PainelEsqueleto } from "@/components/layout/esqueletos";
+import { PageHeader } from "@/components/layout/page-header";
 import { AnelProgresso } from "@/components/painel/anel-progresso";
 import {
   BarrasMaterias,
@@ -36,7 +34,7 @@ export const metadata: Metadata = { title: "Painel · Ascend" };
 
 export default function PainelPage({ params }: PageProps<"/concursos/[id]">) {
   return (
-    <Suspense fallback={<PageHeaderSkeleton />}>
+    <Suspense fallback={<PainelEsqueleto />}>
       <Painel params={params} />
     </Suspense>
   );

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { STATUS_INFO, STATUS_ORDEM, type StatusTopico } from "@/lib/status";
+import { chamarAction } from "@/lib/chamar-action";
 import { cn } from "@/lib/utils";
 import { MAX_LINKS, MAX_NOTA, normalizarLink } from "@/lib/validacao/topico";
 import { salvarDetalhes } from "@/server/actions/topicos";
@@ -89,11 +90,13 @@ function DetalhesForm({
     const todosLinks =
       pendente && !links.includes(pendente) ? [...links, pendente] : links;
     startSalvar(async () => {
-      const resultado = await salvarDetalhes(topico.id, {
-        status,
-        nota,
-        links: todosLinks,
-      });
+      const resultado = await chamarAction(() =>
+        salvarDetalhes(topico.id, {
+          status,
+          nota,
+          links: todosLinks,
+        }),
+      );
       if (resultado.error) setErro(resultado.error);
       else onFechar();
     });

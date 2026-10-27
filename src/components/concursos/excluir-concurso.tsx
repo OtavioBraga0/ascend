@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { chamarAction } from "@/lib/chamar-action";
 import { excluirConcurso } from "@/server/actions/concursos";
 
 export function ExcluirConcurso({ id, nome }: { id: string; nome: string }) {
@@ -22,7 +23,7 @@ export function ExcluirConcurso({ id, nome }: { id: string; nome: string }) {
 
   function confirmar() {
     startTransition(async () => {
-      const result = await excluirConcurso(id);
+      const result = await chamarAction(() => excluirConcurso(id));
       if (result?.error) setErro(result.error);
     });
   }

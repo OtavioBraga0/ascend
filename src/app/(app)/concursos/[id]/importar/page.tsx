@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { ImportarEdital } from "@/components/edital/importar-edital";
-import {
-  PageHeader,
-  PageHeaderSkeleton,
-} from "@/components/layout/page-header";
+import { FormularioEsqueleto } from "@/components/layout/esqueletos";
+import { PageHeader } from "@/components/layout/page-header";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
 import { getEstruturaEdital } from "@/server/data/edital";
@@ -16,7 +14,7 @@ export default function ImportarPage({
   params,
 }: PageProps<"/concursos/[id]/importar">) {
   return (
-    <Suspense fallback={<PageHeaderSkeleton />}>
+    <Suspense fallback={<FormularioEsqueleto />}>
       <Importar params={params} />
     </Suspense>
   );

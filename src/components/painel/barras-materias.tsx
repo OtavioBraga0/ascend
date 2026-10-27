@@ -64,6 +64,8 @@ export function BarrasMaterias({
       <div ref={ref} className="cursor-pointer" aria-hidden>
         {largura > 0 && (
           <BarChart
+            // Oculto para leitores de tela: a tabela abaixo é a alternativa acessível.
+            accessibilityLayer={false}
             width={largura}
             height={linhas.length * ALTURA_LINHA}
             data={linhas}

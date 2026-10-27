@@ -14,6 +14,7 @@ import {
   progressoMateria,
 } from "@/lib/progresso";
 import { STATUS_INFO, STATUS_ORDEM, type StatusTopico } from "@/lib/status";
+import { chamarAction } from "@/lib/chamar-action";
 import { cn } from "@/lib/utils";
 import { alterarStatus } from "@/server/actions/topicos";
 import type { MateriaEdital, TopicoEdital } from "@/server/data/topicos";
@@ -69,7 +70,9 @@ export function EditalLista({ materias }: { materias: MateriaEdital[] }) {
     setErro(undefined);
     startTransition(async () => {
       mudarOtimista({ topicoId, status });
-      const resultado = await alterarStatus(topicoId, status);
+      const resultado = await chamarAction(() =>
+        alterarStatus(topicoId, status),
+      );
       if (resultado.error)
         setErro(`${resultado.error} O status voltou ao anterior.`);
     });
