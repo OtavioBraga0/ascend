@@ -303,7 +303,7 @@ Faça em etapas, rodando lint, typecheck e testes ao fim de cada uma.
 1. ✅ **Setup** — Next.js + TS strict, Tailwind, shadcn/ui, ESLint/Prettier, Vitest, Prisma conectado ao Postgres, `.env.example`, README com instruções para rodar.
 2. ✅ **Auth OTP** — schema do Auth.js, provider Resend customizado, telas `/login` e `/login/codigo`, rate limit, middleware. Em desenvolvimento, se `AUTH_RESEND_KEY` não estiver definida, logar o código no console.
 3. ✅ **Layout mobile first** — app shell com navegação inferior/lateral, tema claro e escuro, PWA (manifest, ícones, service worker básico).
-4. **CRUD de concursos** — lista, criação (passo 1), edição, exclusão.
+4. ✅ **CRUD de concursos** — lista, criação (passo 1), edição, exclusão.
 5. **Parser + revisão do edital** — `parseEdital` com testes, telas dos passos 2 e 3, gravação em transação.
 6. **Edital e status** — lista por matéria, troca de status otimista, bottom sheet com nota e links, busca e filtros.
 7. **Progresso e painel** — `progresso.ts` com testes, os três gráficos, anéis em `/concursos`, "Continuar estudando".
