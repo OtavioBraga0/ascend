@@ -47,8 +47,7 @@ Em produção, rode `npm run db:deploy` para aplicar as migrations.
 
 ## Testes
 
-- `npm test`: testes unitários da lógica pura (parser do edital, progresso, datas, validações). Não precisam de banco.
-- `npm run test:integracao`: testes de isolamento entre usuários contra o Postgres de `DATABASE_URL`. Cada função de acesso a dados é chamada por um usuário com ids de outro. Use o banco local (`docker compose up -d`); os dados de teste são apagados ao final.
+`npm test` roda os testes unitários da lógica pura (parser do edital, progresso, datas, validações). Não precisam de banco.
 
 ## Login
 
@@ -67,7 +66,6 @@ O app é instalável (manifest em `src/app/manifest.ts`, ícones em `public/icon
 | `npm run lint`                    | ESLint                                                     |
 | `npm run typecheck`               | `tsc --noEmit`                                             |
 | `npm test`                        | Testes unitários (Vitest)                                  |
-| `npm run test:integracao`         | Testes de isolamento contra o banco                        |
 | `npm run format` / `format:check` | Prettier                                                   |
 | `npm run db:migrate`              | Cria/aplica migrations em desenvolvimento                  |
 | `npm run db:deploy`               | Aplica migrations em produção                              |
