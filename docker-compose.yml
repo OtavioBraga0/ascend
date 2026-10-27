@@ -1,0 +1,15 @@
+# Postgres local para desenvolvimento. Em produção o banco fica no Supabase.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ascend
+      POSTGRES_PASSWORD: ascend
+      POSTGRES_DB: ascend
+    ports:
+      - "5433:5432"
+    volumes:
+      - ascend-db:/var/lib/postgresql/data
+
+volumes:
+  ascend-db:
