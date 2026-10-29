@@ -10,9 +10,11 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// Nenhuma tela usa `font-mono` hoje: sem preload, ela só baixa se for usada.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
