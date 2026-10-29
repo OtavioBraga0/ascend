@@ -43,7 +43,11 @@ O Supabase é usado apenas como Postgres. Em **Project Settings → Database →
 - `DATABASE_URL`: _Transaction pooler_ (porta 6543), acrescentando `?pgbouncer=true`. É a conexão usada pelo app em runtime.
 - `DIRECT_URL`: conexão direta ou _Session pooler_ (porta 5432). É usada pelo Prisma CLI (`migrate`, `studio`).
 
-Em produção, rode `npm run db:deploy` para aplicar as migrations.
+### Deploy na Vercel
+
+A Vercel usa o script `vercel-build`. Nos deploys de **produção** (`VERCEL_ENV=production`), ele aplica as migrations pendentes (`prisma migrate deploy`) antes do build. Se a migration falhar, o deploy é interrompido e a versão anterior continua no ar. Deploys de preview não tocam no banco.
+
+Configure na Vercel, no ambiente Production, `DATABASE_URL` (pooler, porta 6543) e `DIRECT_URL` (conexão direta ou Session pooler, porta 5432). As migrations usam a `DIRECT_URL`. Para aplicar migrations manualmente: `npm run db:deploy`.
 
 ## Testes
 
