@@ -23,5 +23,10 @@ export async function salvarEditalAction(
 
   revalidatePath(`/concursos/${id.data}`, "layout");
   revalidatePath("/concursos");
-  redirect(`/concursos/${id.data}`);
+  // No novo concurso, o próximo passo do assistente é a afinidade.
+  redirect(
+    resultado.primeiraImportacao
+      ? `/concursos/${id.data}/afinidade?novo=1`
+      : `/concursos/${id.data}`,
+  );
 }

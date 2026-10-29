@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarDays,
   ChartPie,
   ListChecks,
   Trophy,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 const ITEMS: { key: NavKey; label: string; icon: LucideIcon }[] = [
   { key: "concursos", label: "Concursos", icon: Trophy },
   { key: "painel", label: "Painel", icon: ChartPie },
+  { key: "agenda", label: "Agenda", icon: CalendarDays },
   { key: "edital", label: "Edital", icon: ListChecks },
   { key: "conta", label: "Conta", icon: UserRound },
 ];
@@ -49,7 +51,7 @@ function NavBar({ pathname }: { pathname: string | null }) {
       <p className="hidden px-6 pt-6 pb-4 text-xl font-semibold tracking-tight md:block">
         Ascend
       </p>
-      <ul className="grid grid-cols-4 md:flex md:flex-col md:gap-1 md:px-3">
+      <ul className="grid grid-cols-5 md:flex md:flex-col md:gap-1 md:px-3">
         {ITEMS.map(({ key, label, icon: Icon }) => {
           const isActive = key === active;
           return (

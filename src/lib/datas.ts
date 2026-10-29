@@ -52,3 +52,20 @@ export function descreverPrazo(dias: number): string {
   if (dias === 1) return "Falta 1 dia";
   return `Faltam ${dias} dias`;
 }
+
+const diaDaSemana = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+});
+
+/** `Hoje`, `Amanhã` ou `qui., 30/10`, para uma data `AAAA-MM-DD`. */
+export function rotuloDia(iso: string, hoje: string = hojeIso()): string {
+  const dias = Math.round(
+    (isoParaData(iso).getTime() - isoParaData(hoje).getTime()) / DIA_MS,
+  );
+  if (dias === 0) return "Hoje";
+  if (dias === 1) return "Amanhã";
+  return diaDaSemana.format(isoParaData(iso));
+}

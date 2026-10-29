@@ -1,4 +1,4 @@
-export type NavKey = "concursos" | "painel" | "edital" | "conta";
+export type NavKey = "concursos" | "painel" | "agenda" | "edital" | "conta";
 
 /** Id do concurso aberto na URL (`/concursos/[id]/...`), se houver. */
 export function concursoIdFromPath(pathname: string): string | null {
@@ -8,7 +8,7 @@ export function concursoIdFromPath(pathname: string): string | null {
 }
 
 /**
- * Destino de cada item da navegação. Painel e Edital dependem de um concurso
+ * Destino de cada item da navegação. Painel, Agenda e Edital dependem de um concurso
  * aberto; sem ele, levam à lista para o usuário escolher um.
  */
 export function navHrefs(pathname: string): Record<NavKey, string> {
@@ -16,6 +16,7 @@ export function navHrefs(pathname: string): Record<NavKey, string> {
   return {
     concursos: "/concursos",
     painel: id ? `/concursos/${id}` : "/concursos",
+    agenda: id ? `/concursos/${id}/agenda` : "/concursos",
     edital: id ? `/concursos/${id}/edital` : "/concursos",
     conta: "/conta",
   };
@@ -25,7 +26,11 @@ export function activeNavKey(pathname: string): NavKey | null {
   if (pathname === "/conta" || pathname.startsWith("/conta/")) return "conta";
   const id = concursoIdFromPath(pathname);
   if (id) {
-    return pathname.startsWith(`/concursos/${id}/edital`) ? "edital" : "painel";
+    const secao = pathname.slice(`/concursos/${id}`.length);
+    if (secao.startsWith("/edital")) return "edital";
+    if (secao.startsWith("/agenda") || secao.startsWith("/afinidade"))
+      return "agenda";
+    return "painel";
   }
   if (pathname.startsWith("/concursos")) return "concursos";
   return null;

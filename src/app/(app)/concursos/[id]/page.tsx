@@ -1,8 +1,15 @@
-import { ArrowRight, CalendarDays, FileText, Settings } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  CalendarDays,
+  FileText,
+  Settings,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { BlocosDia } from "@/components/agenda/blocos-dia";
 import { PainelEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
 import { AnelProgresso } from "@/components/painel/anel-progresso";
@@ -12,7 +19,8 @@ import {
 } from "@/components/painel/barras-materias";
 import { Button } from "@/components/ui/button";
 import { corDoConcurso } from "@/lib/cores";
-import { descreverPrazo, formatarData } from "@/lib/datas";
+import { formatarHora, gerarAgenda } from "@/lib/agenda";
+import { descreverPrazo, formatarData, hojeIso, rotuloDia } from "@/lib/datas";
 import {
   contarPorStatus,
   contarRevisados,
@@ -28,7 +36,8 @@ import {
 import { STATUS_INFO } from "@/lib/status";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
-import { getMateriasPainel } from "@/server/data/painel";
+import { getMateriasPainel, type MateriaPainel } from "@/server/data/painel";
+import { getRotina, type Rotina } from "@/server/data/rotina";
 
 export const metadata: Metadata = { title: "Painel · Ascend" };
 
@@ -48,7 +57,10 @@ async function Painel({
     requireUser(),
     requireConcurso(id),
   ]);
-  const materias = await getMateriasPainel(user.id, id);
+  const [materias, rotina] = await Promise.all([
+    getMateriasPainel(user.id, id),
+    getRotina(user.id),
+  ]);
 
   const topicos = materias.flatMap((m) => m.topicos);
   const revisados = contarRevisados(topicos);
@@ -119,6 +131,13 @@ async function Painel({
                 Todos os tópicos estão revisados. Hora de fazer simulados!
               </p>
             )}
+
+            <AgendaHoje
+              concursoId={id}
+              materias={materias}
+              rotina={rotina}
+              dataProva={concurso.dataProva}
+            />
 
             <section
               aria-labelledby="geral"
@@ -232,5 +251,66 @@ async function Painel({
         )}
       </main>
     </>
+  );
+}
+
+function AgendaHoje({
+  concursoId,
+  materias,
+  rotina,
+  dataProva,
+}: {
+  concursoId: string;
+  materias: MateriaPainel[];
+  rotina: Rotina | null;
+  dataProva: Date | null;
+}) {
+  if (!rotina) {
+    return (
+      <Link
+        href={`/concursos/${concursoId}/agenda`}
+        className="flex items-center gap-3 rounded-xl border border-dashed p-4 outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <CalendarClock className="size-5 text-muted-foreground" aria-hidden />
+        <span className="flex-1 text-sm">
+          Monte sua agenda: diga quando você estuda e distribuímos os tópicos
+          nos seus horários.
+        </span>
+        <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
+      </Link>
+    );
+  }
+
+  const hoje = hojeIso();
+  const agenda = gerarAgenda({ rotina, materias, hoje, dataProva, janela: 7 });
+  if (agenda.blocosPendentes === 0) return null;
+  const [primeiro] = agenda.dias;
+
+  return (
+    <section
+      aria-labelledby="agenda-hoje"
+      className="space-y-1 rounded-xl border px-4 pt-3 pb-1"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="agenda-hoje" className="font-medium">
+          Agenda de hoje
+        </h2>
+        <Link
+          href={`/concursos/${concursoId}/agenda`}
+          className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Ver semana
+        </Link>
+      </div>
+      {primeiro?.data === hoje ? (
+        <BlocosDia concursoId={concursoId} blocos={primeiro.blocos} />
+      ) : (
+        <p className="pb-3 text-sm text-muted-foreground">
+          Hoje é dia de descanso.
+          {primeiro &&
+            ` Próximo estudo: ${rotuloDia(primeiro.data, hoje).toLowerCase()}, às ${formatarHora(primeiro.blocos[0].inicio)}.`}
+        </p>
+      )}
+    </section>
   );
 }

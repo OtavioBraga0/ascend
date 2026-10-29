@@ -1,4 +1,4 @@
-import { FileText, ListTree } from "lucide-react";
+import { FileText, Gauge, ListTree } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -80,6 +80,28 @@ async function Configuracoes({
             </p>
           )}
         </section>
+
+        {materias.length > 0 && (
+          <section aria-labelledby="agenda" className="space-y-3">
+            <div>
+              <h2 id="agenda" className="font-medium">
+                Agenda
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Matérias e tópicos difíceis ganham mais blocos na agenda.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-11 w-full justify-start sm:w-auto"
+              render={<Link href={`/concursos/${id}/afinidade`} />}
+            >
+              <Gauge aria-hidden />
+              Afinidade com as matérias
+            </Button>
+          </section>
+        )}
 
         <section aria-labelledby="edital" className="space-y-3">
           <h2 id="edital" className="font-medium">

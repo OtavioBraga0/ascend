@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { StatusTopico } from "@/generated/prisma/enums";
+import type { Dificuldade, StatusTopico } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { DetalhesTopico } from "@/lib/validacao/topico";
 
@@ -43,6 +43,14 @@ export async function atualizarStatusTopico(
   return atualizar(userId, topicoId, { status });
 }
 
+export async function atualizarDificuldadeTopico(
+  userId: string,
+  topicoId: string,
+  dificuldade: Dificuldade | null,
+) {
+  return atualizar(userId, topicoId, { dificuldade });
+}
+
 export async function atualizarDetalhesTopico(
   userId: string,
   topicoId: string,
@@ -54,7 +62,7 @@ export async function atualizarDetalhesTopico(
 async function atualizar(
   userId: string,
   topicoId: string,
-  data: Partial<DetalhesTopico>,
+  data: Partial<DetalhesTopico> & { dificuldade?: Dificuldade | null },
 ): Promise<string | null> {
   const topico = await prisma.topico.findFirst({
     where: doUsuario(userId, topicoId),

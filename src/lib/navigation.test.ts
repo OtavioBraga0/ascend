@@ -16,18 +16,20 @@ describe("concursoIdFromPath", () => {
 });
 
 describe("navHrefs", () => {
-  it("aponta Painel e Edital para o concurso aberto", () => {
+  it("aponta Painel, Agenda e Edital para o concurso aberto", () => {
     expect(navHrefs("/concursos/abc/configuracoes")).toEqual({
       concursos: "/concursos",
       painel: "/concursos/abc",
+      agenda: "/concursos/abc/agenda",
       edital: "/concursos/abc/edital",
       conta: "/conta",
     });
   });
 
-  it("sem concurso aberto, Painel e Edital levam à lista", () => {
+  it("sem concurso aberto, Painel, Agenda e Edital levam à lista", () => {
     const hrefs = navHrefs("/conta");
     expect(hrefs.painel).toBe("/concursos");
+    expect(hrefs.agenda).toBe("/concursos");
     expect(hrefs.edital).toBe("/concursos");
   });
 });
@@ -39,6 +41,8 @@ describe("activeNavKey", () => {
     ["/concursos/abc", "painel"],
     ["/concursos/abc/configuracoes", "painel"],
     ["/concursos/abc/edital", "edital"],
+    ["/concursos/abc/agenda", "agenda"],
+    ["/concursos/abc/afinidade", "agenda"],
     ["/conta", "conta"],
     ["/outra", null],
   ])("%s → %s", (pathname, expected) => {

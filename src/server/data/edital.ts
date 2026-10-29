@@ -41,7 +41,7 @@ export async function salvarEdital(
   userId: string,
   concursoId: string,
   materias: EditalInput,
-): Promise<{ mantidos: number } | null> {
+): Promise<{ mantidos: number; primeiraImportacao: boolean } | null> {
   return prisma.$transaction(
     async (tx) => {
       const concurso = await tx.concurso.findFirst({
@@ -113,7 +113,7 @@ export async function salvarEdital(
       await tx.materia.deleteMany({
         where: { id: { in: plano.excluirMaterias } },
       });
-      return { mantidos };
+      return { mantidos, primeiraImportacao: concurso.materias.length === 0 };
     },
     { timeout: 30_000 },
   );

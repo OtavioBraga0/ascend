@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Prioridade } from "@/generated/prisma/enums";
+import { Dificuldade, Prioridade } from "@/generated/prisma/enums";
 import { PESO_MAX, PESO_MIN } from "@/lib/revisao-edital";
 
 export const PRIORIDADES = [
@@ -14,6 +14,23 @@ export const PRIORIDADE_LABEL: Record<Prioridade, string> = {
   MEDIA: "Média",
   BAIXA: "Baixa",
 };
+
+export const DIFICULDADES = [
+  Dificuldade.FACIL,
+  Dificuldade.NEUTRO,
+  Dificuldade.DIFICIL,
+] as const;
+
+export const DIFICULDADE_LABEL: Record<Dificuldade, string> = {
+  FACIL: "Domino",
+  NEUTRO: "Neutro",
+  DIFICIL: "Tenho dificuldade",
+};
+
+export const dificuldadeSchema = z.enum(Dificuldade);
+
+/** Dificuldade de um tópico; `null` volta a usar a da matéria. */
+export const dificuldadeTopicoSchema = dificuldadeSchema.nullable();
 
 export const ajusteMateriaSchema = z.object({
   peso: z.int().min(PESO_MIN).max(PESO_MAX),

@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { dificuldadeTopicoSchema } from "@/lib/validacao/materia";
 import { detalhesTopicoSchema, statusSchema } from "@/lib/validacao/topico";
 import { requireUser } from "@/server/auth";
 import {
   atualizarDetalhesTopico,
+  atualizarDificuldadeTopico,
   atualizarStatusTopico,
 } from "@/server/data/topicos";
 
@@ -34,6 +36,26 @@ export async function alterarStatus(
     user.id,
     id.data,
     novoStatus.data,
+  );
+  if (!concursoId) return { error: NAO_ENCONTRADO };
+  revalidarConcurso(concursoId);
+  return {};
+}
+
+export async function definirDificuldadeTopico(
+  topicoId: string,
+  dificuldade: unknown,
+): Promise<Resultado> {
+  const user = await requireUser();
+  const id = idSchema.safeParse(topicoId);
+  const parsed = dificuldadeTopicoSchema.safeParse(dificuldade);
+  if (!id.success || !parsed.success)
+    return { error: "Não foi possível salvar a afinidade." };
+
+  const concursoId = await atualizarDificuldadeTopico(
+    user.id,
+    id.data,
+    parsed.data,
   );
   if (!concursoId) return { error: NAO_ENCONTRADO };
   revalidarConcurso(concursoId);

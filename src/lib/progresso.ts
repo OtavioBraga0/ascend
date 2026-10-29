@@ -9,7 +9,7 @@ export const VALOR_STATUS: Record<StatusTopico, number> = {
   REVISADO: 1,
 };
 
-const PESO_PRIORIDADE: Record<Prioridade, number> = {
+export const PESO_PRIORIDADE: Record<Prioridade, number> = {
   ALTA: 3,
   MEDIA: 2,
   BAIXA: 1,

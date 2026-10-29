@@ -2,12 +2,14 @@ import { LogOut } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { RotinaForm } from "@/components/agenda/rotina-form";
 import { NameForm } from "@/components/conta/name-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { ThemeSelect } from "@/components/layout/theme-select";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/server/actions/auth";
 import { requireUser } from "@/server/auth";
+import { getRotina } from "@/server/data/rotina";
 
 export const metadata: Metadata = { title: "Conta · Ascend" };
 
@@ -20,6 +22,12 @@ export default function ContaPage() {
           fallback={<div className="h-32 animate-pulse rounded-lg bg-muted" />}
         >
           <Profile />
+        </Suspense>
+
+        <Suspense
+          fallback={<div className="h-72 animate-pulse rounded-lg bg-muted" />}
+        >
+          <Rotina />
         </Suspense>
 
         <section aria-labelledby="tema" className="space-y-3">
@@ -54,6 +62,24 @@ async function Profile() {
         <p className="text-muted-foreground">{user.email}</p>
       </div>
       <NameForm name={user.name} />
+    </section>
+  );
+}
+
+async function Rotina() {
+  const user = await requireUser();
+  const rotina = await getRotina(user.id);
+  return (
+    <section aria-labelledby="rotina" className="scroll-mt-20 space-y-4">
+      <div className="space-y-1">
+        <h2 id="rotina" className="text-sm font-medium">
+          Rotina de estudos
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Usada para montar a agenda de todos os seus concursos.
+        </p>
+      </div>
+      <RotinaForm inicial={rotina} />
     </section>
   );
 }

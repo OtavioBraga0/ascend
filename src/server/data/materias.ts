@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { Dificuldade } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { AjusteMateria } from "@/lib/validacao/materia";
 
@@ -21,11 +22,35 @@ export type MateriaAjustes = Awaited<
   ReturnType<typeof listMateriasAjustes>
 >[number];
 
+/** Matérias com a dificuldade de cada uma e de seus tópicos. */
+export async function listMateriasAfinidade(
+  userId: string,
+  concursoId: string,
+) {
+  return prisma.materia.findMany({
+    where: { concursoId, concurso: { userId } },
+    orderBy: { ordem: "asc" },
+    select: {
+      id: true,
+      nome: true,
+      dificuldade: true,
+      topicos: {
+        orderBy: { ordem: "asc" },
+        select: { id: true, titulo: true, dificuldade: true },
+      },
+    },
+  });
+}
+
+export type MateriaAfinidade = Awaited<
+  ReturnType<typeof listMateriasAfinidade>
+>[number];
+
 /** Retorna o id do concurso, ou `null` se a matéria não for do usuário. */
 export async function ajustarMateria(
   userId: string,
   materiaId: string,
-  ajuste: AjusteMateria,
+  ajuste: AjusteMateria | { dificuldade: Dificuldade },
 ) {
   const materia = await prisma.materia.findFirst({
     where: { id: materiaId, concurso: { userId } },

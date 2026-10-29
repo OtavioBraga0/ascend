@@ -12,9 +12,16 @@ export async function getMateriasPainel(userId: string, concursoId: string) {
       nome: true,
       peso: true,
       prioridade: true,
+      dificuldade: true,
       ordem: true,
       topicos: {
-        select: { id: true, titulo: true, status: true, ordem: true },
+        select: {
+          id: true,
+          titulo: true,
+          status: true,
+          ordem: true,
+          dificuldade: true,
+        },
       },
     },
   });

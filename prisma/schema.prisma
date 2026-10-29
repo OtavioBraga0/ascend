@@ -11,16 +11,17 @@ datasource db {
 
 // Modelos do Auth.js
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
   concursos     Concurso[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  rotina        Rotina?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
 model Account {
@@ -82,21 +83,40 @@ model Concurso {
   @@index([userId])
 }
 
+// Rotina de estudos do usuário; vale para todos os concursos.
+model Rotina {
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diasSemana    Int[] // 0 = domingo … 6 = sábado
+  inicioMinutos Int // minutos desde 00:00 (840 = 14:00)
+  minutosPorDia Int // tempo de estudo, sem contar as pausas
+  duracaoBloco  Int    @default(60) // minutos de cada bloco (uma matéria por bloco)
+  pausa         Int    @default(15) // minutos de descanso entre blocos
+}
+
 enum Prioridade {
   BAIXA
   MEDIA
   ALTA
 }
 
+enum Dificuldade {
+  FACIL
+  NEUTRO
+  DIFICIL
+}
+
 model Materia {
-  id         String     @id @default(cuid())
-  concursoId String
-  concurso   Concurso   @relation(fields: [concursoId], references: [id], onDelete: Cascade)
-  nome       String
-  peso       Int        @default(1) // 1 a 5
-  prioridade Prioridade @default(MEDIA)
-  ordem      Int
-  topicos    Topico[]
+  id          String      @id @default(cuid())
+  concursoId  String
+  concurso    Concurso    @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+  nome        String
+  peso        Int         @default(1) // 1 a 5
+  prioridade  Prioridade  @default(MEDIA)
+  dificuldade Dificuldade @default(NEUTRO)
+  ordem       Int
+  topicos     Topico[]
 
   @@index([concursoId])
 }
@@ -109,15 +129,16 @@ enum StatusTopico {
 }
 
 model Topico {
-  id        String       @id @default(cuid())
-  materiaId String
-  materia   Materia      @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-  titulo    String
-  ordem     Int
-  status    StatusTopico @default(NAO_INICIADO)
-  nota      String? // anotações livres
-  links     String[]     @default([])
-  updatedAt DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  materiaId   String
+  materia     Materia      @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  titulo      String
+  ordem       Int
+  status      StatusTopico @default(NAO_INICIADO)
+  nota        String? // anotações livres
+  dificuldade Dificuldade? // null = a da matéria
+  links       String[]     @default([])
+  updatedAt   DateTime     @updatedAt
 
   @@index([materiaId])
 }

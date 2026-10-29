@@ -10,6 +10,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import {
   PrismaClient,
+  type Dificuldade,
   type StatusTopico,
 } from "../src/generated/prisma/client";
 
@@ -23,6 +24,7 @@ type MateriaSeed = {
   nome: string;
   peso: number;
   prioridade: "ALTA" | "MEDIA" | "BAIXA";
+  dificuldade?: Dificuldade;
   topicos: [titulo: string, status?: StatusTopico][];
 };
 
@@ -47,6 +49,7 @@ const MATERIAS: MateriaSeed[] = [
     nome: "Matemática",
     peso: 1,
     prioridade: "MEDIA",
+    dificuldade: "DIFICIL",
     topicos: [
       ["Operações com números reais", "REVISADO"],
       ["Razão e proporção", "EXERCICIOS"],
@@ -59,6 +62,7 @@ const MATERIAS: MateriaSeed[] = [
     nome: "Noções de Informática",
     peso: 1,
     prioridade: "BAIXA",
+    dificuldade: "FACIL",
     topicos: [
       ["Windows: pastas, arquivos e atalhos", "TEORIA"],
       ["Word: edição e formatação de textos"],
@@ -111,6 +115,18 @@ async function main() {
     select: { id: true },
   });
 
+  // Não sobrescreve a rotina de quem já definiu a sua.
+  await prisma.rotina.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
+      userId: user.id,
+      diasSemana: [1, 2, 3, 4, 5],
+      inicioMinutos: 19 * 60,
+      minutosPorDia: 3 * 60,
+    },
+  });
+
   const dataProva = new Date();
   dataProva.setUTCHours(0, 0, 0, 0);
   dataProva.setUTCDate(dataProva.getUTCDate() + 120);
@@ -132,6 +148,7 @@ async function main() {
             nome: materia.nome,
             peso: materia.peso,
             prioridade: materia.prioridade,
+            dificuldade: materia.dificuldade,
             ordem,
             topicos: {
               create: materia.topicos.map(

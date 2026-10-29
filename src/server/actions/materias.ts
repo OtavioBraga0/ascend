@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
   ajusteMateriaSchema,
+  dificuldadeSchema,
   ordemMateriasSchema,
 } from "@/lib/validacao/materia";
 import { requireUser } from "@/server/auth";
@@ -30,6 +31,24 @@ export async function ajustarMateriaAction(
     return { error: "Não foi possível salvar o ajuste." };
 
   const concursoId = await ajustarMateria(user.id, id.data, parsed.data);
+  if (!concursoId) return { error: "Matéria não encontrada." };
+  revalidarConcurso(concursoId);
+  return {};
+}
+
+export async function definirDificuldadeMateriaAction(
+  materiaId: string,
+  dificuldade: unknown,
+): Promise<Resultado> {
+  const user = await requireUser();
+  const id = idSchema.safeParse(materiaId);
+  const parsed = dificuldadeSchema.safeParse(dificuldade);
+  if (!id.success || !parsed.success)
+    return { error: "Não foi possível salvar a afinidade." };
+
+  const concursoId = await ajustarMateria(user.id, id.data, {
+    dificuldade: parsed.data,
+  });
   if (!concursoId) return { error: "Matéria não encontrada." };
   revalidarConcurso(concursoId);
   return {};
