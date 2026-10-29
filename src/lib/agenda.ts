@@ -8,8 +8,8 @@ import { PESO_PRIORIDADE, VALOR_STATUS } from "@/lib/progresso";
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
-/** Sobra do dia menor que isso não vira bloco. */
-export const BLOCO_MINIMO = 15;
+/** Sobra do dia menor que essa fração do bloco não vira bloco. */
+export const FRACAO_MINIMA_BLOCO = 0.5;
 
 /** Limite da simulação: depois disso, a agenda diz só "mais de 3 anos". */
 const MAX_DIAS = 3 * 366;
@@ -80,13 +80,16 @@ export type Agenda = {
 
 /**
  * Horários dos blocos de um dia: blocos cheios separados pela pausa e, se
- * sobrar tempo (mínimo de 15 min), um bloco menor no fim.
+ * sobrar pelo menos metade de um bloco, um bloco menor no fim.
  */
 export function horariosDoDia(rotina: RotinaAgenda): Horario[] {
   const horarios: Horario[] = [];
   let restante = rotina.minutosPorDia;
   let inicio = rotina.inicioMinutos;
-  while (restante >= BLOCO_MINIMO && rotina.duracaoBloco > 0) {
+  while (
+    rotina.duracaoBloco > 0 &&
+    restante >= rotina.duracaoBloco * FRACAO_MINIMA_BLOCO
+  ) {
     const duracao = Math.min(rotina.duracaoBloco, restante);
     horarios.push({ inicio, fim: inicio + duracao });
     restante -= duracao;

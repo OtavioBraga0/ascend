@@ -66,17 +66,28 @@ describe("horariosDoDia", () => {
     ]);
   });
 
-  it("a sobra vira um bloco menor no fim", () => {
+  it("a sobra de pelo menos metade do bloco vira um bloco menor no fim", () => {
     expect(horariosDoDia(rotina({ minutosPorDia: 90 }))).toEqual([
       { inicio: 840, fim: 900 },
       { inicio: 915, fim: 945 },
     ]);
   });
 
-  it("ignora sobras menores que 15 min", () => {
-    expect(
-      horariosDoDia(rotina({ minutosPorDia: 60, duracaoBloco: 50 })),
-    ).toHaveLength(1);
+  it("descarta sobras menores que metade do bloco", () => {
+    // 19:00, 4h, blocos de 45 min e pausa de 10: sobrariam 15 min às 23:35.
+    const horarios = horariosDoDia(
+      rotina({
+        inicioMinutos: 19 * 60,
+        minutosPorDia: 240,
+        duracaoBloco: 45,
+        pausa: 10,
+      }),
+    );
+    expect(horarios).toHaveLength(5);
+    expect(horarios.at(-1)).toEqual({
+      inicio: 22 * 60 + 40,
+      fim: 23 * 60 + 25,
+    });
   });
 });
 
