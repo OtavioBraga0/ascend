@@ -18,10 +18,20 @@ export function ConcursoCard({
   const cor = corDoConcurso(concurso.cor);
   const percentual = progresso === null ? null : Math.round(progresso * 100);
   const detalhes = [concurso.banca, concurso.cargo].filter(Boolean).join(" · ");
+  const nomeAcessivel = [
+    concurso.nome,
+    percentual === null
+      ? "edital não importado"
+      : `${percentual}% de progresso`,
+    concurso.dataProva
+      ? descreverPrazo(diasAte(concurso.dataProva)).toLowerCase()
+      : "sem data da prova",
+  ].join(", ");
 
   return (
     <Link
       href={`/concursos/${concurso.id}`}
+      aria-label={nomeAcessivel}
       className={cn(
         "flex items-center gap-3 rounded-xl border border-l-4 bg-card p-4 transition-colors outline-none",
         "hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50",

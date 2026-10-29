@@ -145,6 +145,7 @@ export function MateriasAjustes({
                 Peso
                 <select
                   value={materia.peso}
+                  aria-label={`Peso de ${materia.nome}`}
                   onChange={(e) =>
                     ajustar(materia, { peso: Number(e.target.value) })
                   }
@@ -161,6 +162,7 @@ export function MateriasAjustes({
                 Prioridade
                 <select
                   value={materia.prioridade}
+                  aria-label={`Prioridade de ${materia.nome}`}
                   onChange={(e) =>
                     ajustar(materia, {
                       prioridade: e.target.value as Prioridade,

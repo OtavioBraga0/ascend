@@ -273,6 +273,7 @@ function MateriaCabecalho({
       disabled={desabilitado}
       aria-expanded={expandida}
       aria-controls={`topicos-${materia.id}`}
+      aria-label={`${materia.nome}, ${percentual}%, ${expandida ? "recolher" : "expandir"}`}
       className="flex w-full flex-col gap-2 rounded-xl p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default"
     >
       <span className="flex w-full items-start gap-2">
