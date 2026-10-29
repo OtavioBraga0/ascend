@@ -8,11 +8,28 @@ export function concursoIdFromPath(pathname: string): string | null {
 }
 
 /**
- * Destino de cada item da navegação. Painel, Agenda e Edital dependem de um concurso
- * aberto; sem ele, levam à lista para o usuário escolher um.
+ * Concurso para Painel, Agenda e Edital quando a URL não tem um: o último
+ * acessado (se ainda existir) ou, se o usuário tiver só um, esse.
  */
-export function navHrefs(pathname: string): Record<NavKey, string> {
-  const id = concursoIdFromPath(pathname);
+export function concursoPadrao(
+  concursoIds: string[],
+  ultimoAcessado: string | null,
+): string | null {
+  if (ultimoAcessado && concursoIds.includes(ultimoAcessado))
+    return ultimoAcessado;
+  return concursoIds.length === 1 ? concursoIds[0] : null;
+}
+
+/**
+ * Destino de cada item da navegação. Painel, Agenda e Edital dependem de um
+ * concurso: o da URL ou o padrão; sem nenhum, levam à lista para o usuário
+ * escolher um.
+ */
+export function navHrefs(
+  pathname: string,
+  padrao: string | null = null,
+): Record<NavKey, string> {
+  const id = concursoIdFromPath(pathname) ?? padrao;
   return {
     concursos: "/concursos",
     painel: id ? `/concursos/${id}` : "/concursos",

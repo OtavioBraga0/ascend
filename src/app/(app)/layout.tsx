@@ -1,4 +1,8 @@
+import { Suspense } from "react";
+
 import { AppNav } from "@/components/layout/app-nav";
+import { requireUser } from "@/server/auth";
+import { listConcursoIds } from "@/server/data/concursos";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +13,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         Pular para o conteúdo
       </a>
-      <AppNav />
+      <Suspense fallback={<AppNav />}>
+        <NavDoUsuario />
+      </Suspense>
       {/* Espaço para a barra inferior (celular) ou lateral (desktop). */}
       <div
         id="conteudo"
@@ -20,4 +26,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     </>
   );
+}
+
+async function NavDoUsuario() {
+  const user = await requireUser();
+  return <AppNav concursoIds={await listConcursoIds(user.id)} />;
 }

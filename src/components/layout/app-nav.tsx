@@ -10,9 +10,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useSyncExternalStore } from "react";
 
-import { activeNavKey, navHrefs, type NavKey } from "@/lib/navigation";
+import {
+  activeNavKey,
+  concursoIdFromPath,
+  concursoPadrao,
+  navHrefs,
+  type NavKey,
+} from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const ITEMS: { key: NavKey; label: string; icon: LucideIcon }[] = [
@@ -23,21 +29,64 @@ const ITEMS: { key: NavKey; label: string; icon: LucideIcon }[] = [
   { key: "conta", label: "Conta", icon: UserRound },
 ];
 
-/** Barra inferior no celular; barra lateral a partir de `md`. */
-export function AppNav() {
+const CHAVE_ULTIMO = "ascend:ultimo-concurso";
+
+// O armazenamento pode falhar (aba privada, dados bloqueados): sem ele, a
+// navegação só não lembra o último concurso.
+function lerUltimo(): string | null {
+  try {
+    return localStorage.getItem(CHAVE_ULTIMO);
+  } catch {
+    return null;
+  }
+}
+
+function assinarStorage(aviso: () => void) {
+  window.addEventListener("storage", aviso);
+  return () => window.removeEventListener("storage", aviso);
+}
+
+/**
+ * Barra inferior no celular; barra lateral a partir de `md`. `concursoIds`
+ * (do usuário) permite apontar Painel, Agenda e Edital para um concurso
+ * mesmo fora dele.
+ */
+export function AppNav({ concursoIds = [] }: { concursoIds?: string[] }) {
   return (
-    <Suspense fallback={<NavBar pathname={null} />}>
-      <CurrentNavBar />
+    <Suspense fallback={<NavBar pathname={null} padrao={null} />}>
+      <CurrentNavBar concursoIds={concursoIds} />
     </Suspense>
   );
 }
 
-function CurrentNavBar() {
-  return <NavBar pathname={usePathname()} />;
+function CurrentNavBar({ concursoIds }: { concursoIds: string[] }) {
+  const pathname = usePathname();
+  const ultimo = useSyncExternalStore(assinarStorage, lerUltimo, () => null);
+  const atual = concursoIdFromPath(pathname);
+
+  useEffect(() => {
+    if (!atual) return;
+    try {
+      localStorage.setItem(CHAVE_ULTIMO, atual);
+    } catch {}
+  }, [atual]);
+
+  return (
+    <NavBar
+      pathname={pathname}
+      padrao={concursoPadrao(concursoIds, atual ?? ultimo)}
+    />
+  );
 }
 
-function NavBar({ pathname }: { pathname: string | null }) {
-  const hrefs = navHrefs(pathname ?? "");
+function NavBar({
+  pathname,
+  padrao,
+}: {
+  pathname: string | null;
+  padrao: string | null;
+}) {
+  const hrefs = navHrefs(pathname ?? "", padrao);
   const active = pathname ? activeNavKey(pathname) : null;
 
   return (

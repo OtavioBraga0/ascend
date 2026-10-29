@@ -25,6 +25,15 @@ export async function listConcursos(userId: string) {
   });
 }
 
+/** Ids dos concursos do usuário, para a navegação. */
+export async function listConcursoIds(userId: string) {
+  const concursos = await prisma.concurso.findMany({
+    where: { userId },
+    select: { id: true },
+  });
+  return concursos.map((c) => c.id);
+}
+
 /** `null` se o concurso não existir ou não for do usuário. */
 export async function getConcurso(userId: string, id: string) {
   return prisma.concurso.findFirst({
