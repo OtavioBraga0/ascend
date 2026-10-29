@@ -7,6 +7,7 @@ import {
   contarRevisados,
   diasAteProva,
   emPercentual,
+  diasPorTopico,
   formatarRitmo,
   ordenarParaPainel,
   progressoConcurso,
@@ -105,6 +106,13 @@ describe("prazo e ritmo", () => {
     expect(formatarRitmo(2.25)).toBe("2,3 tópicos/dia");
     expect(formatarRitmo(1)).toBe("1 tópico/dia");
     expect(formatarRitmo(0)).toBe("0 tópicos/dia");
+  });
+
+  it("abaixo de 1 tópico/dia, mostra de quantos em quantos dias", () => {
+    expect(formatarRitmo(0.2)).toBe("1 tópico a cada 5 dias");
+    expect(diasPorTopico(0.3)).toBe("3");
+    expect(diasPorTopico(0.8)).toBe("1,3");
+    expect(diasPorTopico(0.5)).toBe("2");
   });
 
   it("percentual inteiro", () => {

@@ -25,6 +25,7 @@ import {
   contarPorStatus,
   contarRevisados,
   diasAteProva,
+  diasPorTopico,
   emPercentual,
   formatarRitmo,
   ordenarParaPainel,
@@ -200,13 +201,17 @@ async function Painel({
                         className="mt-1 text-3xl font-semibold"
                         aria-label={formatarRitmo(ritmo)}
                       >
-                        {ritmo.toLocaleString("pt-BR", {
-                          maximumFractionDigits: 1,
-                        })}
+                        {ritmo > 0 && ritmo < 1
+                          ? 1
+                          : ritmo.toLocaleString("pt-BR", {
+                              maximumFractionDigits: 1,
+                            })}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {ritmo === 1 ? "tópico" : "tópicos"} por dia para
-                        revisar tudo
+                        {ritmo > 0 && ritmo < 1
+                          ? `tópico a cada ${diasPorTopico(ritmo)} dias`
+                          : `${ritmo === 1 ? "tópico" : "tópicos"} por dia`}{" "}
+                        para revisar tudo
                       </p>
                     </>
                   )}

@@ -79,7 +79,21 @@ export function ritmoNecessario(
   return naoRevisados / Math.max(dias, 1);
 }
 
+/**
+ * Para ritmos abaixo de 1 tópico/dia: de quantos em quantos dias revisar um
+ * tópico (`5`, `2,5`). Inteiro a partir de 2 dias; abaixo disso, uma casa
+ * decimal, para "a cada 1 dia" não contradizer o ritmo menor que 1/dia.
+ */
+export function diasPorTopico(ritmo: number): string {
+  const dias = 1 / ritmo;
+  return dias.toLocaleString("pt-BR", {
+    maximumFractionDigits: dias < 2 ? 1 : 0,
+  });
+}
+
 export function formatarRitmo(ritmo: number): string {
+  if (ritmo > 0 && ritmo < 1)
+    return `1 tópico a cada ${diasPorTopico(ritmo)} dias`;
   const valor = ritmo.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
   return `${valor} ${ritmo === 1 ? "tópico/dia" : "tópicos/dia"}`;
 }
