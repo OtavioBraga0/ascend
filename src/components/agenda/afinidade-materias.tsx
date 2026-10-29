@@ -32,8 +32,15 @@ function aplicar(
   }));
 }
 
+/** Rótulo curto para caber no select do tópico em telas estreitas. */
+const DIFICULDADE_CURTA: Record<Dificuldade, string> = {
+  FACIL: "domino",
+  NEUTRO: "neutro",
+  DIFICIL: "difícil",
+};
+
 const SELECT =
-  "h-9 w-36 shrink-0 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-9 w-40 shrink-0 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /** Afinidade com cada matéria e, opcionalmente, com tópicos específicos. */
 export function AfinidadeMaterias({
@@ -152,7 +159,7 @@ export function AfinidadeMaterias({
                           className={SELECT}
                         >
                           <option value="">
-                            {`Como a matéria (${DIFICULDADE_LABEL[materia.dificuldade].toLowerCase()})`}
+                            {`Padrão (${DIFICULDADE_CURTA[materia.dificuldade]})`}
                           </option>
                           {DIFICULDADES.map((dificuldade) => (
                             <option key={dificuldade} value={dificuldade}>
