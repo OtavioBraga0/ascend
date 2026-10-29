@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,16 @@ function paraForm(rotina: RotinaAgenda): RotinaFormValues {
   };
 }
 
-/** Prévia dos horários de um dia com os valores atuais do formulário. */
-function previa(valores: RotinaFormValues): string | null {
+/**
+ * Prévia dos horários de um dia com os valores atuais do formulário, ou o
+ * erro de horário que o servidor também rejeitaria.
+ */
+function previa(
+  valores: RotinaFormValues,
+): { horarios: string } | { erro: string } {
   const [h, m] = valores.inicioMinutos.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  if (Number.isNaN(h) || Number.isNaN(m))
+    return { erro: "Informe o horário de início." };
   const horarios = horariosDoDia({
     diasSemana: [],
     inicioMinutos: h * 60 + m,
@@ -49,12 +55,13 @@ function previa(valores: RotinaFormValues): string | null {
     duracaoBloco: Number(valores.duracaoBloco),
     pausa: Number(valores.pausa),
   });
-  if (horarios.length === 0) return null;
-  const fim = horarios.at(-1)!.fim;
-  if (fim > 24 * 60) return null;
-  return horarios
-    .map((b) => `${formatarHora(b.inicio)}–${formatarHora(b.fim)}`)
-    .join(" · ");
+  if ((horarios.at(-1)?.fim ?? 0) > 24 * 60)
+    return { erro: "Com esse início, os estudos passariam da meia-noite." };
+  return {
+    horarios: horarios
+      .map((b) => `${formatarHora(b.inicio)}–${formatarHora(b.fim)}`)
+      .join(" · "),
+  };
 }
 
 /** Dias da semana, horário de início, tempo por dia, bloco e pausa. */
@@ -69,8 +76,7 @@ export function RotinaForm({
     RotinaFormState,
     FormData
   >(salvarRotinaAction, {});
-  // Controlado para a prévia acompanhar a digitação e o React não limpar os
-  // campos depois da action.
+  // Controlado para a prévia acompanhar a digitação.
   const [valores, setValores] = useState(() =>
     paraForm(inicial ?? ROTINA_PADRAO),
   );
@@ -88,10 +94,22 @@ export function RotinaForm({
     }));
   }
 
-  const horarios = previa(valores);
+  const dia = previa(valores);
+  // O erro detectado no cliente aparece só na caixa da prévia; o do servidor
+  // continua valendo como garantia.
+  const erroInicio = "erro" in dia ? dia.erro : erro("inicioMinutos");
+
+  // Envia pelo onSubmit, e não por `<form action>`: depois de uma action o
+  // React chama form.reset(), que devolve os <select> controlados ao valor da
+  // montagem enquanto o estado continua com o valor escolhido.
+  function enviar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   return (
-    <form action={formAction} className="space-y-5" noValidate>
+    <form onSubmit={enviar} className="space-y-5" noValidate>
       <fieldset
         className="space-y-2"
         aria-describedby={erro("diasSemana") ? "dias-erro" : undefined}
@@ -106,6 +124,7 @@ export function RotinaForm({
                 value={dia.valor}
                 checked={valores.diasSemana.includes(String(dia.valor))}
                 onChange={() => alternarDia(String(dia.valor))}
+                aria-label={dia.nome}
                 className="peer sr-only"
               />
               <span className="sr-only">{dia.nome}</span>
@@ -137,8 +156,8 @@ export function RotinaForm({
             step={300}
             value={valores.inicioMinutos}
             onChange={(e) => mudar("inicioMinutos", e.target.value)}
-            aria-invalid={!!erro("inicioMinutos")}
-            aria-describedby={erro("inicioMinutos") ? "inicio-erro" : undefined}
+            aria-invalid={!!erroInicio}
+            aria-describedby={erroInicio ? "inicio-erro" : undefined}
             className="h-11 text-base"
           />
         </div>
@@ -191,20 +210,24 @@ export function RotinaForm({
           </select>
         </div>
       </div>
-      {erro("inicioMinutos") && (
-        <MensagemErro id="inicio-erro">{erro("inicioMinutos")}</MensagemErro>
+      {"horarios" in dia && erroInicio && (
+        <MensagemErro id="inicio-erro">{erroInicio}</MensagemErro>
       )}
 
-      <p className="rounded-lg bg-muted px-3 py-2 text-sm">
-        {horarios ? (
-          <>
-            <span className="text-muted-foreground">Cada dia de estudo: </span>
-            {horarios}
-          </>
-        ) : (
-          "Com esse início, os estudos passariam da meia-noite."
-        )}
-      </p>
+      {"horarios" in dia ? (
+        <p className="rounded-lg bg-muted px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Cada dia de estudo: </span>
+          {dia.horarios}
+        </p>
+      ) : (
+        <p
+          id="inicio-erro"
+          role="alert"
+          className="rounded-lg bg-muted px-3 py-2 text-sm text-destructive"
+        >
+          {dia.erro}
+        </p>
+      )}
 
       {state.savedAt && !state.fieldErrors && (
         <p role="status" className="text-sm text-muted-foreground">
@@ -216,7 +239,7 @@ export function RotinaForm({
         type="submit"
         size="lg"
         className="h-11 w-full sm:w-auto"
-        disabled={pending}
+        disabled={pending || "erro" in dia}
       >
         {pending ? "Salvando…" : submitLabel}
       </Button>
