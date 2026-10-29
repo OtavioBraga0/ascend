@@ -7,7 +7,8 @@ import { criarConcurso } from "@/server/actions/concursos";
 
 export const metadata: Metadata = { title: "Novo concurso · Ascend" };
 
-// Passo 1 de 3; os passos 2 e 3 ficam em /concursos/[id]/importar.
+// Passo 1 de 4; os passos 2 e 3 ficam em /concursos/[id]/importar e o 4 em
+// /concursos/[id]/afinidade.
 export default function NovoConcursoPage() {
   return (
     <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,99 +38,121 @@ export function ConcursoForm({
   const [state, formAction, pending] = useActionState(action, {});
   // O React reseta o formulário após a action; os valores devolvidos repõem o que foi digitado.
   const values = state.values ?? initialValues;
+  // Nome vazio é barrado no cliente, sem ida ao servidor.
+  const [nomeVazio, setNomeVazio] = useState(false);
   const erro = (campo: keyof ConcursoFormValues) =>
-    state.fieldErrors?.[campo]?.[0];
+    campo === "nome" && nomeVazio
+      ? "Informe o nome do concurso."
+      : state.fieldErrors?.[campo]?.[0];
+
+  function validarNome(e: React.FormEvent<HTMLFormElement>) {
+    const nome = e.currentTarget.elements.namedItem("nome") as HTMLInputElement;
+    const vazio = !nome.value.trim();
+    setNomeVazio(vazio);
+    if (vazio) {
+      e.preventDefault();
+      nome.focus();
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-5" noValidate>
-      <Campo id="nome" label="Nome do concurso" erro={erro("nome")}>
-        <Input
-          id="nome"
-          name="nome"
-          defaultValue={values.nome}
-          placeholder="Ex.: Escrevente — Ministério Público"
-          required
-          maxLength={120}
-          autoFocus={!initialValues.nome}
-          {...ariaErro("nome", erro("nome"))}
-          className="h-11 text-base"
-        />
-      </Campo>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Campo id="banca" label="Banca" opcional erro={erro("banca")}>
+    <form
+      action={formAction}
+      onSubmit={validarNome}
+      className="space-y-5"
+      noValidate
+    >
+      {/* Desabilitado durante o envio para nada do que for digitado se perder. */}
+      <fieldset disabled={pending} className="space-y-5">
+        <Campo id="nome" label="Nome do concurso" erro={erro("nome")}>
           <Input
-            id="banca"
-            name="banca"
-            defaultValue={values.banca}
-            placeholder="Ex.: Vunesp"
-            maxLength={80}
-            {...ariaErro("banca", erro("banca"))}
+            id="nome"
+            name="nome"
+            defaultValue={values.nome}
+            placeholder="Ex.: Escrevente — Ministério Público"
+            required
+            maxLength={120}
+            autoFocus={!initialValues.nome}
+            {...ariaErro("nome", erro("nome"))}
             className="h-11 text-base"
           />
         </Campo>
-        <Campo id="cargo" label="Cargo" opcional erro={erro("cargo")}>
-          <Input
-            id="cargo"
-            name="cargo"
-            defaultValue={values.cargo}
-            placeholder="Ex.: Oficial de Promotoria"
-            maxLength={80}
-            {...ariaErro("cargo", erro("cargo"))}
-            className="h-11 text-base"
-          />
-        </Campo>
-      </div>
 
-      <Campo
-        id="dataProva"
-        label="Data da prova"
-        opcional
-        erro={erro("dataProva")}
-      >
-        <Input
-          id="dataProva"
-          name="dataProva"
-          type="date"
-          defaultValue={values.dataProva}
-          {...ariaErro("dataProva", erro("dataProva"))}
-          className="h-11 text-base sm:w-56"
-        />
-      </Campo>
-
-      <fieldset
-        className="space-y-2"
-        aria-describedby={erro("cor") ? "cor-erro" : undefined}
-      >
-        <legend className="mb-2 text-sm font-medium">Cor</legend>
-        <div className="flex flex-wrap gap-3">
-          {CORES_IDS.map((cor) => (
-            <label key={cor} className="relative cursor-pointer">
-              <input
-                type="radio"
-                name="cor"
-                value={cor}
-                defaultChecked={values.cor === cor}
-                className="peer sr-only"
-              />
-              <span className="sr-only">{CORES[cor].label}</span>
-              <span
-                aria-hidden
-                className={cn(
-                  "flex size-10 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-background transition-shadow",
-                  "peer-checked:ring-2 peer-checked:ring-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
-                  "[&>svg]:hidden peer-checked:[&>svg]:block",
-                  CORES[cor].fundo,
-                )}
-              >
-                <Check className="size-5" />
-              </span>
-            </label>
-          ))}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Campo id="banca" label="Banca" opcional erro={erro("banca")}>
+            <Input
+              id="banca"
+              name="banca"
+              defaultValue={values.banca}
+              placeholder="Ex.: Vunesp"
+              maxLength={80}
+              {...ariaErro("banca", erro("banca"))}
+              className="h-11 text-base"
+            />
+          </Campo>
+          <Campo id="cargo" label="Cargo" opcional erro={erro("cargo")}>
+            <Input
+              id="cargo"
+              name="cargo"
+              defaultValue={values.cargo}
+              placeholder="Ex.: Oficial de Promotoria"
+              maxLength={80}
+              {...ariaErro("cargo", erro("cargo"))}
+              className="h-11 text-base"
+            />
+          </Campo>
         </div>
-        {erro("cor") && (
-          <MensagemErro id="cor-erro">{erro("cor")}</MensagemErro>
-        )}
+
+        <Campo
+          id="dataProva"
+          label="Data da prova"
+          opcional
+          erro={erro("dataProva")}
+        >
+          <Input
+            id="dataProva"
+            name="dataProva"
+            type="date"
+            defaultValue={values.dataProva}
+            {...ariaErro("dataProva", erro("dataProva"))}
+            className="h-11 text-base sm:w-56"
+          />
+        </Campo>
+
+        <fieldset
+          className="space-y-2"
+          aria-describedby={erro("cor") ? "cor-erro" : undefined}
+        >
+          <legend className="mb-2 text-sm font-medium">Cor</legend>
+          <div className="flex flex-wrap gap-3">
+            {CORES_IDS.map((cor) => (
+              <label key={cor} className="relative cursor-pointer">
+                <input
+                  type="radio"
+                  name="cor"
+                  value={cor}
+                  defaultChecked={values.cor === cor}
+                  className="peer sr-only"
+                />
+                <span className="sr-only">{CORES[cor].label}</span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-background transition-shadow",
+                    "peer-checked:ring-2 peer-checked:ring-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
+                    "[&>svg]:hidden peer-checked:[&>svg]:block",
+                    CORES[cor].fundo,
+                  )}
+                >
+                  <Check className="size-5" />
+                </span>
+              </label>
+            ))}
+          </div>
+          {erro("cor") && (
+            <MensagemErro id="cor-erro">{erro("cor")}</MensagemErro>
+          )}
+        </fieldset>
       </fieldset>
 
       {state.error && <MensagemErro>{state.error}</MensagemErro>}
