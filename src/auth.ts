@@ -31,8 +31,20 @@ const otpProvider: EmailConfig = {
   },
 };
 
+const prismaAdapter = PrismaAdapter(prisma);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...prismaAdapter,
+    // O adaptador usa `delete`, que lança erro se a sessão já não existe. No
+    // login, o Auth.js apaga a sessão do cookie quando não a reconhece (ex.:
+    // expirada ou removida do banco), e esse erro derrubava o login com um
+    // código válido.
+    deleteSession: async (sessionToken) => {
+      await prisma.session.deleteMany({ where: { sessionToken } });
+      return null;
+    },
+  },
   // Na Vercel o host é confiável; fora dela, o Auth.js só confiaria com AUTH_URL definida.
   trustHost: true,
   session: { strategy: "database" },

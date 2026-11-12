@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { destinoSeguro } from "@/lib/destino-login";
 
 export const metadata: Metadata = { title: "Entrar · Ascend" };
 
@@ -25,9 +26,10 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
 async function LoginFormWithError({
   searchParams,
 }: Pick<PageProps<"/login">, "searchParams">) {
-  const { error } = await searchParams;
+  const { error, voltar } = await searchParams;
   return (
     <LoginForm
+      voltar={destinoSeguro(voltar)}
       initialError={
         error ? "Não foi possível entrar. Tente novamente." : undefined
       }

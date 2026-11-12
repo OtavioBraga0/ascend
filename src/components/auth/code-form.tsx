@@ -10,6 +10,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { parametroVoltar } from "@/lib/destino-login";
 import { OTP_LENGTH, RESEND_COOLDOWN_SECONDS } from "@/lib/otp";
 import {
   resendCode,
@@ -19,9 +20,12 @@ import {
 
 export function CodeForm({
   email,
+  voltar,
   initialError,
 }: {
   email: string;
+  /** Para onde ir depois de entrar. */
+  voltar: string;
   initialError?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -53,6 +57,7 @@ export function CodeForm({
     <div className="space-y-6">
       <form ref={formRef} action={verifyAction} className="space-y-4">
         <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="voltar" value={voltar} />
         <div className="flex justify-center">
           <InputOTP
             name="code"
@@ -109,7 +114,7 @@ export function CodeForm({
 
       <div className="flex items-center justify-between text-sm">
         <Link
-          href="/login"
+          href={`/login${parametroVoltar(voltar)}`}
           className="text-muted-foreground underline-offset-4 hover:underline"
         >
           Trocar email

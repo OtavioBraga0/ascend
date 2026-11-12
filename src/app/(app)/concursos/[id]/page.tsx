@@ -4,6 +4,7 @@ import {
   CalendarDays,
   FileText,
   Settings,
+  Share2,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -37,6 +38,7 @@ import {
 import { STATUS_INFO } from "@/lib/status";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
+import { getCompartilhamento } from "@/server/data/compartilhamento";
 import { getMateriasPainel, type MateriaPainel } from "@/server/data/painel";
 import { getRotina, type Rotina } from "@/server/data/rotina";
 
@@ -58,9 +60,10 @@ async function Painel({
     requireUser(),
     requireConcurso(id),
   ]);
-  const [materias, rotina] = await Promise.all([
+  const [materias, rotina, compartilhamento] = await Promise.all([
     getMateriasPainel(user.id, id),
     getRotina(user.id),
+    getCompartilhamento(user.id, id),
   ]);
 
   const topicos = materias.flatMap((m) => m.topicos);
@@ -110,6 +113,13 @@ async function Painel({
           </section>
         ) : (
           <>
+            {compartilhamento && compartilhamento.copias > 0 && (
+              <CopiasDaEstrutura
+                concursoId={id}
+                copias={compartilhamento.copias}
+              />
+            )}
+
             {proximo ? (
               <Link
                 href={`/concursos/${id}/edital?materia=${proximo.materia.id}`}
@@ -317,5 +327,30 @@ function AgendaHoje({
         </p>
       )}
     </section>
+  );
+}
+
+/** Quantas pessoas copiaram a estrutura; leva ao compartilhamento nos ajustes. */
+function CopiasDaEstrutura({
+  concursoId,
+  copias,
+}: {
+  concursoId: string;
+  copias: number;
+}) {
+  return (
+    <Link
+      href={`/concursos/${concursoId}/configuracoes#compartilhar`}
+      aria-label={
+        copias === 1
+          ? "1 pessoa copiou sua estrutura"
+          : `${copias} pessoas copiaram sua estrutura`
+      }
+      title="Pessoas que copiaram sua estrutura"
+      className="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium tabular-nums outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <Share2 className="size-4 text-muted-foreground" aria-hidden />
+      {copias}
+    </Link>
   );
 }

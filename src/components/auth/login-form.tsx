@@ -7,7 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestCode, type AuthFormState } from "@/server/actions/auth";
 
-export function LoginForm({ initialError }: { initialError?: string }) {
+export function LoginForm({
+  initialError,
+  voltar,
+}: {
+  initialError?: string;
+  /** Para onde ir depois de entrar (ex.: o link de uma estrutura compartilhada). */
+  voltar?: string;
+}) {
   const [state, formAction, pending] = useActionState<AuthFormState, FormData>(
     requestCode,
     {
@@ -17,6 +24,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
 
   return (
     <form action={formAction} className="space-y-4">
+      {voltar && <input type="hidden" name="voltar" value={voltar} />}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input

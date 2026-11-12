@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { CompartilharEstrutura } from "@/components/compartilhamento/compartilhar-estrutura";
 import { ConcursoForm } from "@/components/concursos/concurso-form";
 import { ExcluirConcurso } from "@/components/concursos/excluir-concurso";
 import { MateriasAjustes } from "@/components/concursos/materias-ajustes";
@@ -13,6 +14,7 @@ import { dataParaIso } from "@/lib/datas";
 import { editarConcurso } from "@/server/actions/concursos";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
+import { getCompartilhamento } from "@/server/data/compartilhamento";
 import { listMateriasAjustes } from "@/server/data/materias";
 
 export const metadata: Metadata = { title: "Ajustes do concurso · Ascend" };
@@ -35,7 +37,10 @@ async function Configuracoes({
     requireUser(),
     requireConcurso(id),
   ]);
-  const materias = await listMateriasAjustes(user.id, id);
+  const [materias, compartilhamento] = await Promise.all([
+    listMateriasAjustes(user.id, id),
+    getCompartilhamento(user.id, id),
+  ]);
 
   return (
     <>
@@ -100,6 +105,30 @@ async function Configuracoes({
               <Gauge aria-hidden />
               Afinidade com as matérias
             </Button>
+          </section>
+        )}
+
+        {materias.length > 0 && (
+          <section
+            id="compartilhar"
+            aria-labelledby="compartilhar-titulo"
+            className="scroll-mt-20 space-y-3"
+          >
+            <div>
+              <h2 id="compartilhar-titulo" className="font-medium">
+                Compartilhar estrutura
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Gere um link para quem estuda para o mesmo concurso ver e copiar
+                suas matérias e tópicos. Seu progresso e suas anotações não vão
+                junto.
+              </p>
+            </div>
+            <CompartilharEstrutura
+              concursoId={id}
+              nome={concurso.nome}
+              compartilhamento={compartilhamento}
+            />
           </section>
         )}
 

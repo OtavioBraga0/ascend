@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { CodeForm } from "@/components/auth/code-form";
+import { destinoSeguro } from "@/lib/destino-login";
 
 export const metadata: Metadata = { title: "Código de acesso · Ascend" };
 
 const ERRORS: Record<string, string> = {
   codigo: "Código inválido ou expirado.",
   limite: "Muitas tentativas. Aguarde alguns minutos e peça um novo código.",
+  falha: "Não foi possível entrar. Peça um novo código e tente de novo.",
 };
 
 export default function CodePage({ searchParams }: PageProps<"/login/codigo">) {
@@ -22,7 +24,7 @@ export default function CodePage({ searchParams }: PageProps<"/login/codigo">) {
 async function CodeStep({
   searchParams,
 }: Pick<PageProps<"/login/codigo">, "searchParams">) {
-  const { email, erro } = await searchParams;
+  const { email, erro, voltar } = await searchParams;
   if (typeof email !== "string" || !email) redirect("/login");
 
   return (
@@ -37,6 +39,7 @@ async function CodeStep({
       </div>
       <CodeForm
         email={email}
+        voltar={destinoSeguro(voltar)}
         initialError={typeof erro === "string" ? ERRORS[erro] : undefined}
       />
     </div>
