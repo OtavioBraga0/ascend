@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { CodeForm } from "@/components/auth/code-form";
+import { destinoSeguro } from "@/lib/destino-login";
 
 export const metadata: Metadata = { title: "Código de acesso · Ascend" };
 
@@ -23,7 +24,7 @@ export default function CodePage({ searchParams }: PageProps<"/login/codigo">) {
 async function CodeStep({
   searchParams,
 }: Pick<PageProps<"/login/codigo">, "searchParams">) {
-  const { email, erro } = await searchParams;
+  const { email, erro, voltar } = await searchParams;
   if (typeof email !== "string" || !email) redirect("/login");
 
   return (
@@ -38,6 +39,7 @@ async function CodeStep({
       </div>
       <CodeForm
         email={email}
+        voltar={destinoSeguro(voltar)}
         initialError={typeof erro === "string" ? ERRORS[erro] : undefined}
       />
     </div>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { OTP_PROVIDER_ID, signIn, signOut } from "@/auth";
+import { destinoSeguro, DESTINO_PADRAO } from "@/lib/destino-login";
 import { isValidOtpCode, normalizeEmail } from "@/lib/otp";
 import {
   deleteVerificationTokens,
@@ -17,8 +18,6 @@ export type AuthFormState = {
   redirectTo?: string;
   sentAt?: number;
 };
-
-const AFTER_LOGIN_PATH = "/concursos";
 
 const emailSchema = z
   .string("Informe um email válido.")
@@ -41,7 +40,7 @@ async function sendCode(email: string): Promise<AuthFormState> {
   const url = await signIn(OTP_PROVIDER_ID, {
     email,
     redirect: false,
-    redirectTo: AFTER_LOGIN_PATH,
+    redirectTo: DESTINO_PADRAO,
   });
 
   const error = new URL(url, "http://localhost").searchParams.get("error");
@@ -59,7 +58,10 @@ export async function requestCode(
 
   const result = await sendCode(parsed.data);
   if (result.error) return result;
-  redirect(`/login/codigo?${new URLSearchParams({ email: parsed.data })}`);
+  const params = new URLSearchParams({ email: parsed.data });
+  const voltar = destinoSeguro(formData.get("voltar"));
+  if (voltar !== DESTINO_PADRAO) params.set("voltar", voltar);
+  redirect(`/login/codigo?${params}`);
 }
 
 export async function resendCode(
@@ -99,7 +101,7 @@ export async function verifyCode(
   const params = new URLSearchParams({
     email,
     token: code,
-    callbackUrl: AFTER_LOGIN_PATH,
+    callbackUrl: destinoSeguro(formData.get("voltar")),
   });
   return { redirectTo: `/api/auth/callback/${OTP_PROVIDER_ID}?${params}` };
 }

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { handlers, OTP_PROVIDER_ID } from "@/auth";
+import { destinoSeguro, DESTINO_PADRAO } from "@/lib/destino-login";
 import { normalizeEmail } from "@/lib/otp";
 import { consumeAttempt } from "@/server/data/auth-attempts";
 
@@ -20,6 +21,10 @@ export async function GET(request: NextRequest) {
     const url = new URL("/login/codigo", request.nextUrl.origin);
     url.searchParams.set("email", email);
     url.searchParams.set("erro", erro);
+    const voltar = destinoSeguro(
+      request.nextUrl.searchParams.get("callbackUrl"),
+    );
+    if (voltar !== DESTINO_PADRAO) url.searchParams.set("voltar", voltar);
     return NextResponse.redirect(url);
   };
 
