@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   // Validação do código: aplica o limite de tentativas mesmo para quem
   // chama o callback direto, sem passar pela tela de código.
   const email = normalizeEmail(request.nextUrl.searchParams.get("email") ?? "");
-  const backToCode = (erro: "codigo" | "limite") => {
+  const backToCode = (erro: "codigo" | "limite" | "falha") => {
     const url = new URL("/login/codigo", request.nextUrl.origin);
     url.searchParams.set("email", email);
     url.searchParams.set("erro", erro);
@@ -28,11 +28,11 @@ export async function GET(request: NextRequest) {
 
   const response = await handlers.GET(request);
   const location = response.headers.get("location");
-  if (
+  const erro =
     location &&
-    new URL(location, request.nextUrl.origin).searchParams.has("error")
-  ) {
-    return backToCode("codigo");
-  }
+    new URL(location, request.nextUrl.origin).searchParams.get("error");
+  // Só "Verification" é código errado ou expirado; o resto (banco, adaptador)
+  // não é culpa do código e não deve ser apresentado como tal.
+  if (erro) return backToCode(erro === "Verification" ? "codigo" : "falha");
   return response;
 }

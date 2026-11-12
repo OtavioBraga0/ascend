@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Código de acesso · Ascend" };
 const ERRORS: Record<string, string> = {
   codigo: "Código inválido ou expirado.",
   limite: "Muitas tentativas. Aguarde alguns minutos e peça um novo código.",
+  falha: "Não foi possível entrar. Peça um novo código e tente de novo.",
 };
 
 export default function CodePage({ searchParams }: PageProps<"/login/codigo">) {
