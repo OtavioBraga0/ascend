@@ -5,6 +5,8 @@ const SESSION_COOKIES = [
   "__Secure-authjs.session-token",
 ];
 const PUBLIC_PATHS = ["/login", "/login/codigo", "/offline"];
+// Pré-visualização de estruturas compartilhadas: aberta a quem não tem conta.
+const PUBLIC_PREFIXES = ["/c/"];
 
 /**
  * Checagem otimista: só verifica se existe cookie de sessão. A validação real
@@ -12,7 +14,11 @@ const PUBLIC_PATHS = ["/login", "/login/codigo", "/offline"];
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (PUBLIC_PATHS.includes(pathname)) return NextResponse.next();
+  if (
+    PUBLIC_PATHS.includes(pathname) ||
+    PUBLIC_PREFIXES.some((prefixo) => pathname.startsWith(prefixo))
+  )
+    return NextResponse.next();
 
   const hasSession = SESSION_COOKIES.some((name) => request.cookies.has(name));
   if (!hasSession) {

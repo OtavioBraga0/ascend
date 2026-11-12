@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   concursos     Concurso[]
   rotina        Rotina?
+  copias        Copia[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
@@ -68,19 +69,45 @@ model AuthAttempt {
 
 // Domínio
 model Concurso {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nome      String // ex.: "Escrevente — Ministério Público"
-  banca     String?
-  cargo     String?
-  dataProva DateTime? @db.Date // só a data; interpretada no fuso America/Sao_Paulo
-  cor       String    @default("blue")
-  materias  Materia[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id               String            @id @default(cuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome             String // ex.: "Escrevente — Ministério Público"
+  banca            String?
+  cargo            String?
+  dataProva        DateTime?         @db.Date // só a data; interpretada no fuso America/Sao_Paulo
+  cor              String            @default("blue")
+  materias         Materia[]
+  compartilhamento Compartilhamento?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([userId])
+}
+
+// Link público para outras pessoas copiarem a estrutura do concurso.
+// "Parar de compartilhar" desativa; compartilhar de novo gera outro token e
+// mantém as cópias já contadas.
+model Compartilhamento {
+  id         String   @id @default(cuid())
+  concursoId String   @unique
+  concurso   Concurso @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  ativo      Boolean  @default(true)
+  copias     Copia[]
+  createdAt  DateTime @default(now())
+}
+
+// Quem copiou a estrutura; uma linha por pessoa (o contador conta pessoas).
+model Copia {
+  id                 String           @id @default(cuid())
+  compartilhamentoId String
+  compartilhamento   Compartilhamento @relation(fields: [compartilhamentoId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime         @default(now())
+
+  @@unique([compartilhamentoId, userId])
 }
 
 // Rotina de estudos do usuário; vale para todos os concursos.

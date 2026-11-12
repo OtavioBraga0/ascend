@@ -31,26 +31,36 @@ async function Afinidade({
   params,
   searchParams,
 }: Pick<PageProps<"/concursos/[id]/afinidade">, "params" | "searchParams">) {
-  const [{ id }, { novo }] = await Promise.all([params, searchParams]);
+  const [{ id }, { novo, copiado }] = await Promise.all([params, searchParams]);
   const [user, concurso] = await Promise.all([
     requireUser(),
     requireConcurso(id),
   ]);
   const materias = await listMateriasAfinidade(user.id, id);
   if (materias.length === 0) redirect(`/concursos/${id}/importar`);
-  // `?novo=1`: passo 4 do assistente de novo concurso.
+  // `?novo=1`: passo 4 do assistente de novo concurso. `?copiado=1`: veio de
+  // uma estrutura compartilhada, e este é o próximo passo.
   const assistente = novo === "1";
+  const copia = copiado === "1";
 
   return (
     <>
       <PageHeader
-        title={assistente ? concurso.nome : "Afinidade"}
+        title={assistente || copia ? concurso.nome : "Afinidade"}
         voltar={
-          assistente ? `/concursos/${id}` : `/concursos/${id}/configuracoes`
+          assistente || copia
+            ? `/concursos/${id}`
+            : `/concursos/${id}/configuracoes`
         }
       />
       <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-6">
         {assistente && <Passos atual={4} />}
+        {copia && (
+          <p role="status" className="rounded-lg bg-muted px-3 py-2 text-sm">
+            Estrutura copiada para a sua conta. Agora diga como você se sai em
+            cada matéria para montarmos sua agenda.
+          </p>
+        )}
         <div className="space-y-1">
           <h2 className="font-medium">Como você se sai em cada matéria?</h2>
           <p className="text-sm text-muted-foreground">
