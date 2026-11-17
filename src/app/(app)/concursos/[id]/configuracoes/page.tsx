@@ -1,6 +1,5 @@
 import { FileText, Gauge, ListTree } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { CompartilharEstrutura } from "@/components/compartilhamento/compartilhar-estrutura";
@@ -9,7 +8,7 @@ import { ExcluirConcurso } from "@/components/concursos/excluir-concurso";
 import { MateriasAjustes } from "@/components/concursos/materias-ajustes";
 import { FormularioEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { dataParaIso } from "@/lib/datas";
 import { editarConcurso } from "@/server/actions/concursos";
 import { requireUser } from "@/server/auth";
@@ -96,15 +95,15 @@ async function Configuracoes({
                 Matérias e tópicos difíceis ganham mais blocos na agenda.
               </p>
             </div>
-            <Button
+            <ButtonLink
               variant="outline"
               size="lg"
               className="h-11 w-full justify-start sm:w-auto"
-              render={<Link href={`/concursos/${id}/afinidade`} />}
+              href={`/concursos/${id}/afinidade`}
             >
               <Gauge aria-hidden />
               Afinidade com as matérias
-            </Button>
+            </ButtonLink>
           </section>
         )}
 
@@ -138,25 +137,25 @@ async function Configuracoes({
           </h2>
           <div className="flex flex-col gap-2 sm:flex-row">
             {materias.length > 0 && (
-              <Button
+              <ButtonLink
                 variant="outline"
                 size="lg"
                 className="h-11 justify-start sm:flex-1"
-                render={<Link href={`/concursos/${id}/estrutura`} />}
+                href={`/concursos/${id}/estrutura`}
               >
                 <ListTree aria-hidden />
                 Editar estrutura
-              </Button>
+              </ButtonLink>
             )}
-            <Button
+            <ButtonLink
               variant="outline"
               size="lg"
               className="h-11 justify-start sm:flex-1"
-              render={<Link href={`/concursos/${id}/importar`} />}
+              href={`/concursos/${id}/importar`}
             >
               <FileText aria-hidden />
               {materias.length > 0 ? "Reimportar edital" : "Importar edital"}
-            </Button>
+            </ButtonLink>
           </div>
           {materias.length > 0 && (
             <p className="text-xs text-muted-foreground">

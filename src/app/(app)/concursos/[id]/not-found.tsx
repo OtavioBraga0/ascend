@@ -1,6 +1,4 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 
 export default function ConcursoNaoEncontrado() {
   return (
@@ -9,9 +7,9 @@ export default function ConcursoNaoEncontrado() {
       <p className="text-sm text-muted-foreground">
         Ele pode ter sido excluído, ou o link está incorreto.
       </p>
-      <Button variant="outline" render={<Link href="/concursos" />}>
+      <ButtonLink variant="outline" href="/concursos">
         Ver meus concursos
-      </Button>
+      </ButtonLink>
     </main>
   );
 }

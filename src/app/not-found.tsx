@@ -1,6 +1,4 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 
 export default function NaoEncontrada() {
   return (
@@ -9,9 +7,9 @@ export default function NaoEncontrada() {
       <p className="max-w-sm text-sm text-muted-foreground">
         O endereço pode estar incorreto, ou a página foi removida.
       </p>
-      <Button size="lg" className="h-11" render={<Link href="/concursos" />}>
+      <ButtonLink size="lg" className="h-11" href="/concursos">
         Ir para meus concursos
-      </Button>
+      </ButtonLink>
     </main>
   );
 }

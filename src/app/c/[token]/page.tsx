@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { CopiarEstrutura } from "@/components/compartilhamento/copiar-estrutura";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { formatarData } from "@/lib/datas";
 import { parametroVoltar } from "@/lib/destino-login";
 import { getOptionalUser } from "@/server/auth";
@@ -68,9 +68,9 @@ async function Compartilhado({
           Quem compartilhou pode ter parado de compartilhar ou excluído o
           concurso. Peça um link novo.
         </p>
-        <Button size="lg" className="h-11" render={<Link href="/concursos" />}>
+        <ButtonLink size="lg" className="h-11" href="/concursos">
           Ir para o Ascend
-        </Button>
+        </ButtonLink>
       </section>
     );
   }
@@ -171,14 +171,14 @@ async function Acao({
           Para copiar esta estrutura, entre com seu email. Se ainda não tem
           conta, ela é criada na hora.
         </p>
-        <Button
+        <ButtonLink
           size="lg"
           className="h-11 w-full sm:w-auto"
-          render={<Link href={`/login${parametroVoltar(`/c/${token}`)}`} />}
+          href={`/login${parametroVoltar(`/c/${token}`)}`}
         >
           <LogIn aria-hidden />
           Entrar para copiar
-        </Button>
+        </ButtonLink>
         {aviso}
       </section>
     );

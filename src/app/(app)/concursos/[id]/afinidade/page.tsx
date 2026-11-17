@@ -1,6 +1,5 @@
 import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -8,7 +7,7 @@ import { AfinidadeMaterias } from "@/components/agenda/afinidade-materias";
 import { Passos } from "@/components/concursos/passos";
 import { FormularioEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { BLOCOS_POR_TOPICO } from "@/lib/agenda";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
@@ -72,14 +71,14 @@ async function Afinidade({
           </p>
         </div>
         <AfinidadeMaterias materias={materias} />
-        <Button
+        <ButtonLink
           size="lg"
           className="h-11 w-full sm:w-auto"
-          render={<Link href={`/concursos/${id}/agenda`} />}
+          href={`/concursos/${id}/agenda`}
         >
           <CalendarDays aria-hidden />
           Ver minha agenda
-        </Button>
+        </ButtonLink>
       </main>
     </>
   );

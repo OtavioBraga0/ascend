@@ -1,10 +1,10 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import Link from "next/link";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 
 /** Tela de erro inesperado, com opção de tentar de novo. */
 export function Falha({ error, retry }: { error: unknown; retry: () => void }) {
@@ -36,14 +36,14 @@ export function Falha({ error, retry }: { error: unknown; retry: () => void }) {
         <Button size="lg" className="h-11" onClick={() => retry()}>
           Tentar de novo
         </Button>
-        <Button
+        <ButtonLink
           variant="outline"
           size="lg"
           className="h-11"
-          render={<Link href="/concursos" />}
+          href="/concursos"
         >
           Ir para o início
-        </Button>
+        </ButtonLink>
       </div>
     </main>
   );

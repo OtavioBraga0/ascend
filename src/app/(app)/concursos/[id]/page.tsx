@@ -18,7 +18,7 @@ import {
   BarrasMaterias,
   type LinhaMateria,
 } from "@/components/painel/barras-materias";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { corDoConcurso } from "@/lib/cores";
 import { formatarHora, gerarAgenda } from "@/lib/agenda";
 import { descreverPrazo, formatarData, hojeIso, rotuloDia } from "@/lib/datas";
@@ -103,13 +103,13 @@ async function Painel({
             <p className="text-sm text-muted-foreground">
               Cole o texto do edital para gerar as matérias e os tópicos.
             </p>
-            <Button
+            <ButtonLink
               size="lg"
               className="h-11"
-              render={<Link href={`/concursos/${id}/importar`} />}
+              href={`/concursos/${id}/importar`}
             >
               Importar edital
-            </Button>
+            </ButtonLink>
           </section>
         ) : (
           <>

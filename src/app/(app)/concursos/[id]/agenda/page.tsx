@@ -7,7 +7,7 @@ import { BlocosDia } from "@/components/agenda/blocos-dia";
 import { RotinaForm } from "@/components/agenda/rotina-form";
 import { PainelEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { formatarDuracao, formatarHora, gerarAgenda } from "@/lib/agenda";
 import { formatarData, hojeIso, isoParaData, rotuloDia } from "@/lib/datas";
 import { descreverDias } from "@/lib/validacao/rotina";
@@ -53,13 +53,13 @@ async function Agenda({
               A agenda distribui os tópicos do edital nos seus horários de
               estudo.
             </p>
-            <Button
+            <ButtonLink
               size="lg"
               className="h-11"
-              render={<Link href={`/concursos/${id}/importar`} />}
+              href={`/concursos/${id}/importar`}
             >
               Importar edital
-            </Button>
+            </ButtonLink>
           </section>
         ) : !rotina ? (
           <section aria-labelledby="rotina" className="space-y-4">

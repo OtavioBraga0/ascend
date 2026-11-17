@@ -1,12 +1,11 @@
 import { FileText } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { EditalLista } from "@/components/edital/edital-lista";
 import { EditalEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
 import { getEdital } from "@/server/data/topicos";
@@ -45,13 +44,13 @@ async function Edital({
               Importe o conteúdo programático para começar a marcar seu
               progresso.
             </p>
-            <Button
+            <ButtonLink
               size="lg"
               className="h-11"
-              render={<Link href={`/concursos/${id}/importar`} />}
+              href={`/concursos/${id}/importar`}
             >
               Importar edital
-            </Button>
+            </ButtonLink>
           </section>
         ) : (
           <EditalLista materias={materias} />
