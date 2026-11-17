@@ -335,6 +335,7 @@ function TopicoLinha({
       <button
         type="button"
         onClick={onAbrir}
+        aria-label={rotuloTopico(topico)}
         className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <span className="break-words">{topico.titulo}</span>
@@ -363,4 +364,16 @@ function TopicoLinha({
       />
     </li>
   );
+}
+
+/** "Abrir Crase, com anotação e 2 links": o título e o que o tópico já tem. */
+function rotuloTopico(topico: TopicoEdital) {
+  const extras = [
+    topico.nota && "anotação",
+    topico.links.length > 0 &&
+      `${topico.links.length} ${topico.links.length === 1 ? "link" : "links"}`,
+  ].filter(Boolean);
+  return extras.length > 0
+    ? `Abrir ${topico.titulo}, com ${extras.join(" e ")}`
+    : `Abrir ${topico.titulo}`;
 }

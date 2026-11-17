@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Plus, X } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,13 @@ type Props = {
 
 /** Bottom sheet com status, anotações e links do tópico. */
 export function TopicoSheet({ topico, materiaNome, onFechar }: Props) {
+  // O painel é nomeado pelo título do tópico.
+  const tituloId = useId();
   return (
     <Sheet open={!!topico} onOpenChange={(aberto) => !aberto && onFechar()}>
       <SheetContent
         side="bottom"
+        aria-labelledby={tituloId}
         className="mx-auto max-h-[90dvh] w-full max-w-2xl gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
       >
         {/* A key reinicia o formulário a cada tópico aberto. */}
@@ -48,6 +51,7 @@ export function TopicoSheet({ topico, materiaNome, onFechar }: Props) {
             topico={topico}
             materiaNome={materiaNome}
             onFechar={onFechar}
+            tituloId={tituloId}
           />
         )}
       </SheetContent>
@@ -59,10 +63,12 @@ function DetalhesForm({
   topico,
   materiaNome,
   onFechar,
+  tituloId,
 }: {
   topico: TopicoEdital;
   materiaNome: string;
   onFechar: () => void;
+  tituloId: string;
 }) {
   const [status, setStatus] = useState<StatusTopico>(topico.status);
   const [nota, setNota] = useState(topico.nota ?? "");
@@ -112,7 +118,7 @@ function DetalhesForm({
     <>
       <SheetHeader className="pr-12">
         <SheetDescription>{materiaNome}</SheetDescription>
-        <SheetTitle className="text-base leading-snug">
+        <SheetTitle id={tituloId} className="text-base leading-snug">
           {topico.titulo}
         </SheetTitle>
       </SheetHeader>
@@ -172,15 +178,14 @@ function DetalhesForm({
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${semProtocolo(link)} (abre em nova aba)`}
                     className="flex min-w-0 flex-1 items-center gap-2 py-2 underline-offset-4 hover:underline"
                   >
                     <ExternalLink
                       className="size-4 shrink-0 text-muted-foreground"
                       aria-hidden
                     />
-                    <span className="truncate">
-                      {link.replace(/^https?:\/\//, "")}
-                    </span>
+                    <span className="truncate">{semProtocolo(link)}</span>
                   </a>
                   <Button
                     variant="ghost"
@@ -261,4 +266,9 @@ function DetalhesForm({
       </SheetFooter>
     </>
   );
+}
+
+/** O link como aparece na lista: sem `https://` e sem a barra final. */
+function semProtocolo(link: string) {
+  return link.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
