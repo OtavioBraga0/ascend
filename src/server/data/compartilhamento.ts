@@ -64,6 +64,15 @@ export async function desativarCompartilhamento(
   return count > 0;
 }
 
+/** O link existe e está ativo? Consulta leve, usada pelo Proxy. */
+export async function linkAtivo(token: string): Promise<boolean> {
+  const compartilhamento = await prisma.compartilhamento.findUnique({
+    where: { token },
+    select: { ativo: true },
+  });
+  return compartilhamento?.ativo === true;
+}
+
 /**
  * Estrutura pública de um link ativo, para a pré-visualização. Só traz o que
  * vai na cópia, mais o nome do dono (nunca o email). `null` se o link não
