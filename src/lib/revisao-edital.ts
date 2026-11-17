@@ -150,6 +150,32 @@ export function contarTopicos(estado: MateriaRevisao[]) {
   return estado.reduce((total, m) => total + m.topicos.length, 0);
 }
 
+/**
+ * A revisão mudou em relação ao estado inicial (nomes, pesos, tópicos ou
+ * ordem)? Ações que não mudam nada, como renomear para o mesmo texto, não contam.
+ */
+export function revisaoAlterada(
+  atual: MateriaRevisao[],
+  inicial: MateriaRevisao[],
+): boolean {
+  if (atual === inicial) return false;
+  if (atual.length !== inicial.length) return true;
+  return atual.some((materia, i) => {
+    const antes = inicial[i];
+    return (
+      materia.id !== antes.id ||
+      materia.nome !== antes.nome ||
+      materia.peso !== antes.peso ||
+      materia.topicos.length !== antes.topicos.length ||
+      materia.topicos.some(
+        (topico, j) =>
+          topico.id !== antes.topicos[j].id ||
+          topico.titulo !== antes.topicos[j].titulo,
+      )
+    );
+  });
+}
+
 /** Problemas que impedem salvar (nomes vazios). */
 export function problemasRevisao(estado: MateriaRevisao[]): string[] {
   const problemas: string[] = [];

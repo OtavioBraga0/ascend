@@ -1,15 +1,24 @@
 "use client";
 
+import { Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { unstable_rethrow } from "next/navigation";
+import { useState, useTransition } from "react";
 
 import { Passos } from "@/components/concursos/passos";
-import { RevisaoEdital } from "@/components/edital/revisao-edital";
+import {
+  RevisaoEdital,
+  type ExtracaoRevisao,
+} from "@/components/edital/revisao-edital";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parseEdital } from "@/lib/parser-edital";
 import { criarRevisao, type MateriaRevisao } from "@/lib/revisao-edital";
+import {
+  extrairEditalIaAction,
+  type ResultadoExtracaoIa,
+} from "@/server/actions/extrair-edital-ia";
 
 const EXEMPLO = `LÍNGUA PORTUGUESA
 1. Leitura e interpretação de textos.
@@ -17,6 +26,12 @@ const EXEMPLO = `LÍNGUA PORTUGUESA
 
 NOÇÕES DE DIREITO PENAL
 Infração penal; Tipicidade; Ilicitude.`;
+
+const SEM_TOPICOS =
+  "Não encontramos tópicos nesse texto. Confira se colou o conteúdo programático.";
+
+const IA_INDISPONIVEL =
+  "A extração com IA não está disponível agora. Use “Gerar estrutura”.";
 
 const AVISO_REIMPORTACAO =
   "Salvar substitui a estrutura atual. Matérias e tópicos com o mesmo nome mantêm o progresso; os demais são apagados.";
@@ -28,26 +43,102 @@ const AVISO_REIMPORTACAO =
 export function ImportarEdital({
   concursoId,
   existentes = [],
+  iaDisponivel = false,
 }: {
   concursoId: string;
   /** Matérias já salvas; se houver, é uma reimportação. */
   existentes?: { id: string; nome: string; peso: number }[];
+  /** Mostra o botão "Extrair com IA" (há chave do OpenRouter no servidor). */
+  iaDisponivel?: boolean;
 }) {
   const reimportacao = existentes.length > 0;
   const [texto, setTexto] = useState("");
-  const [revisao, setRevisao] = useState<MateriaRevisao[] | null>(null);
+  const [revisao, setRevisao] = useState<{
+    materias: MateriaRevisao[];
+    extracao?: ExtracaoRevisao;
+  } | null>(null);
   const [erro, setErro] = useState<string>();
+  const [lendoComIa, startLeitura] = useTransition();
 
-  function analisar() {
+  /** Leitura padrão (parser por regras). Devolve `false` se não achou tópicos. */
+  function analisar(extracao?: ExtracaoRevisao) {
     const materias = parseEdital(texto);
     if (materias.length === 0) {
-      setErro(
-        "Não encontramos tópicos nesse texto. Confira se colou o conteúdo programático.",
-      );
-      return;
+      setErro(SEM_TOPICOS);
+      return false;
     }
     setErro(undefined);
-    setRevisao(criarRevisao(materias, () => crypto.randomUUID(), existentes));
+    setRevisao({
+      materias: criarRevisao(materias, () => crypto.randomUUID(), existentes),
+      // A origem só importa quando havia a opção da IA.
+      extracao:
+        extracao ??
+        (iaDisponivel
+          ? { origem: "padrao", avisos: [], suspeitos: [], usouFallback: false }
+          : undefined),
+    });
+    return true;
+  }
+
+  function extrairComIa() {
+    setErro(undefined);
+    startLeitura(async () => {
+      let resultado: ResultadoExtracaoIa | null;
+      try {
+        resultado = await extrairEditalIaAction({ texto });
+      } catch (falha) {
+        // Sem conexão ou erro no servidor: cai na leitura padrão.
+        unstable_rethrow(falha);
+        resultado = null;
+      }
+
+      if (resultado?.ok) {
+        const materias = criarRevisao(
+          resultado.estrutura,
+          () => crypto.randomUUID(),
+          existentes,
+        );
+        const naoEncontrados = new Set(
+          resultado.topicosNaoEncontrados.map((t) =>
+            chave(t.materia, t.topico),
+          ),
+        );
+        setRevisao({
+          materias,
+          extracao: {
+            origem: "ia",
+            avisos: resultado.avisos,
+            suspeitos: materias.flatMap((m) =>
+              m.topicos
+                .filter((t) => naoEncontrados.has(chave(m.nome, t.titulo)))
+                .map((t) => t.id),
+            ),
+            usouFallback: false,
+          },
+        });
+        return;
+      }
+
+      switch (resultado?.motivo) {
+        case "limite":
+        case "texto_invalido":
+          setErro(resultado.mensagem);
+          return;
+        case "indisponivel":
+          setErro(IA_INDISPONIVEL);
+          return;
+      }
+      if (
+        !analisar({
+          origem: "padrao",
+          avisos: [],
+          suspeitos: [],
+          usouFallback: true,
+        })
+      ) {
+        setErro(`Não foi possível usar a IA agora. ${SEM_TOPICOS}`);
+      }
+    });
   }
 
   if (revisao) {
@@ -56,9 +147,11 @@ export function ImportarEdital({
         {!reimportacao && <Passos atual={3} />}
         <RevisaoEdital
           concursoId={concursoId}
-          inicial={revisao}
+          inicial={revisao.materias}
           onVoltar={() => setRevisao(null)}
           aviso={reimportacao ? AVISO_REIMPORTACAO : undefined}
+          extracao={revisao.extracao}
+          naoSalva
         />
       </div>
     );
@@ -85,6 +178,7 @@ export function ImportarEdital({
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder={EXEMPLO}
+          disabled={lendoComIa}
           aria-describedby={
             erro ? "texto-edital-ajuda texto-edital-erro" : "texto-edital-ajuda"
           }
@@ -105,22 +199,44 @@ export function ImportarEdital({
         <Button
           size="lg"
           className="h-11 sm:flex-1"
-          onClick={analisar}
-          disabled={!texto.trim()}
+          onClick={() => analisar()}
+          disabled={!texto.trim() || lendoComIa}
         >
           Gerar estrutura
         </Button>
+        {iaDisponivel && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-11 sm:flex-1"
+            onClick={extrairComIa}
+            disabled={!texto.trim() || lendoComIa}
+          >
+            {lendoComIa ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <Sparkles aria-hidden />
+            )}
+            Extrair com IA
+          </Button>
+        )}
         {!reimportacao && (
           <Button
             variant="outline"
             size="lg"
             className="h-11"
-            onClick={() => setRevisao([])}
+            onClick={() => setRevisao({ materias: [] })}
+            disabled={lendoComIa}
           >
             Montar manualmente
           </Button>
         )}
       </div>
+      {lendoComIa && (
+        <p role="status" className="text-center text-sm text-muted-foreground">
+          Lendo o edital… isso pode levar até 1 minuto.
+        </p>
+      )}
       <p className="text-center text-sm">
         <Link
           href={
@@ -135,4 +251,9 @@ export function ImportarEdital({
       </p>
     </div>
   );
+}
+
+/** Identifica um tópico pela matéria e pelo título (os dois são únicos juntos). */
+function chave(materia: string, topico: string) {
+  return `${materia}\u0000${topico}`;
 }

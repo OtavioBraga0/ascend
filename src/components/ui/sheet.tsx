@@ -62,6 +62,7 @@ function SheetContent({
         {showCloseButton && (
           <SheetPrimitive.Close
             data-slot="sheet-close"
+            aria-label="Fechar"
             render={
               <Button
                 variant="ghost"
@@ -70,8 +71,7 @@ function SheetContent({
               />
             }
           >
-            <XIcon />
-            <span className="sr-only">Fechar</span>
+            <XIcon aria-hidden />
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

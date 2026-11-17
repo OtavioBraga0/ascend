@@ -61,7 +61,7 @@ const MAX_PROPORCAO_CAIXA_ALTA = 0.6;
 const MAX_TAMANHO_CABECALHO = 80;
 
 export function parseEdital(texto: string): MateriaParseada[] {
-  const linhas = normalizar(texto);
+  const linhas = normalizarLinhas(texto);
   const capsAtivo = proporcaoCaixaAlta(linhas) <= MAX_PROPORCAO_CAIXA_ALTA;
 
   const grupos: { nome: string; linhas: string[] }[] = [
@@ -107,13 +107,17 @@ export function parseEdital(texto: string): MateriaParseada[] {
 
   return grupos
     .map((grupo) => ({
-      nome: grupo.nome,
+      nome: formatarNomeMateria(grupo.nome),
       topicos: extrairTopicos(grupo.linhas),
     }))
     .filter((materia) => materia.topicos.length > 0);
 }
 
-function normalizar(texto: string): string[] {
+/**
+ * Quebras de linha, espaços, hifenização de PDF e números de página. Devolve
+ * as linhas não vazias.
+ */
+export function normalizarLinhas(texto: string): string[] {
   return texto
     .replace(/\r\n?/g, "\n")
     .replace(/[\t   ]/g, " ")
@@ -121,6 +125,11 @@ function normalizar(texto: string): string[] {
     .split("\n")
     .map((linha) => linha.replace(/ {2,}/g, " ").trim())
     .filter((linha) => linha && !ehNumeroDePagina(linha));
+}
+
+/** O texto normalizado, para mandar à IA e conferir a fidelidade. */
+export function normalizarTexto(texto: string): string {
+  return normalizarLinhas(texto).join("\n");
 }
 
 function ehNumeroDePagina(linha: string) {
@@ -175,7 +184,58 @@ function ehMateriaConhecida(texto: string) {
     });
 }
 
-function limparNome(nome: string) {
+/** Siglas comuns em nomes de matérias, que continuam em maiúsculas. */
+const SIGLAS = new Set([
+  "CF",
+  "CLT",
+  "CPC",
+  "CPP",
+  "CTN",
+  "ECA",
+  "MP",
+  "MPE",
+  "MPU",
+  "ONU",
+  "SUS",
+  "TI",
+  "TIC",
+  "TJ",
+  "UE",
+]);
+
+/** I a XXXIX: "Direito Penal II". Não pega palavras como "DI" ou "MIL". */
+const NUMERAL_ROMANO = /^(?=[IVX])X{0,3}(IX|IV|V?I{0,3})$/;
+
+/**
+ * Nome de matéria em CAIXA ALTA vira Title Case, com conectores em minúsculas
+ * ("NOÇÕES DE DIREITO PENAL" → "Noções de Direito Penal"). Siglas, numerais
+ * romanos e palavras com números ficam como estão. Nomes que já vêm com
+ * maiúsculas e minúsculas não mudam.
+ */
+export function formatarNomeMateria(nome: string): string {
+  if (!ehCaixaAlta(nome)) return nome;
+  return nome
+    .split(" ")
+    .map((palavra, i) => {
+      const letras = palavra.replace(/[^\p{L}]/gu, "");
+      if (
+        SIGLAS.has(letras) ||
+        NUMERAL_ROMANO.test(letras) ||
+        /\d/.test(palavra)
+      )
+        return palavra;
+      const minuscula = palavra.toLocaleLowerCase("pt-BR");
+      if (i > 0 && CONECTORES.has(minuscula)) return minuscula;
+      // Primeira letra, mesmo depois de "(" ou aspas.
+      return minuscula.replace(/\p{L}/u, (letra) =>
+        letra.toLocaleUpperCase("pt-BR"),
+      );
+    })
+    .join(" ");
+}
+
+/** Nome de matéria sem pontuação nem espaços no fim. */
+export function limparNome(nome: string) {
   return nome.replace(/[\s:.\-–]+$/u, "").trim();
 }
 
@@ -230,9 +290,17 @@ function juntar(anterior: string, linha: string) {
 }
 
 function extrairTopicos(linhas: string[]): string[] {
+  return limparTopicos(linhas.flatMap(dividirLinha));
+}
+
+/**
+ * Tira marcadores, numeração e pontuação final de cada tópico e descarta os
+ * vazios e os duplicados exatos (na ordem em que aparecem).
+ */
+export function limparTopicos(brutos: string[]): string[] {
   const vistos = new Set<string>();
   const topicos: string[] = [];
-  for (const topico of linhas.flatMap(dividirLinha).map(limparTopico)) {
+  for (const topico of brutos.map(limparTopico)) {
     // Ignora pedaços sem texto (ex.: só a numeração) e duplicados exatos.
     if (!/\p{L}.*\p{L}/u.test(topico) || vistos.has(topico)) continue;
     vistos.add(topico);

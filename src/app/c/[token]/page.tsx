@@ -1,10 +1,10 @@
 import { CalendarDays, ChevronDown, LogIn } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { CopiarEstrutura } from "@/components/compartilhamento/copiar-estrutura";
-import { Button } from "@/components/ui/button";
+import { LinkIndisponivel } from "@/components/compartilhamento/link-indisponivel";
+import { ButtonLink } from "@/components/ui/button-link";
 import { formatarData } from "@/lib/datas";
 import { parametroVoltar } from "@/lib/destino-login";
 import { getOptionalUser } from "@/server/auth";
@@ -23,31 +23,17 @@ export const metadata: Metadata = {
 /** Pré-visualização pública de uma estrutura compartilhada. */
 export default function CompartilhadoPage({ params }: PageProps<"/c/[token]">) {
   return (
-    <>
-      <header className="sticky top-0 z-30 border-b bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-3xl items-center px-4">
-          <Link
-            href="/concursos"
-            className="text-lg font-semibold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            Ascend
-          </Link>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-6">
-        <Suspense
-          fallback={
-            <div
-              role="status"
-              aria-label="Carregando"
-              className="h-64 animate-pulse rounded-xl bg-muted"
-            />
-          }
-        >
-          <Compartilhado params={params} />
-        </Suspense>
-      </main>
-    </>
+    <Suspense
+      fallback={
+        <div
+          role="status"
+          aria-label="Carregando"
+          className="h-64 animate-pulse rounded-xl bg-muted"
+        />
+      }
+    >
+      <Compartilhado params={params} />
+    </Suspense>
   );
 }
 
@@ -60,20 +46,9 @@ async function Compartilhado({
     getOptionalUser(),
   ]);
 
-  if (!estrutura) {
-    return (
-      <section className="flex flex-col items-center gap-3 px-2 py-10 text-center">
-        <h1 className="text-xl font-semibold">Link indisponível</h1>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Quem compartilhou pode ter parado de compartilhar ou excluído o
-          concurso. Peça um link novo.
-        </p>
-        <Button size="lg" className="h-11" render={<Link href="/concursos" />}>
-          Ir para o Ascend
-        </Button>
-      </section>
-    );
-  }
+  // O Proxy já responde 404 para links inexistentes ou desativados; isto cobre
+  // o link desativado entre a checagem do Proxy e esta leitura.
+  if (!estrutura) return <LinkIndisponivel />;
 
   const { concurso, donoNome } = estrutura;
   const totalTopicos = concurso.materias.reduce(
@@ -171,14 +146,14 @@ async function Acao({
           Para copiar esta estrutura, entre com seu email. Se ainda não tem
           conta, ela é criada na hora.
         </p>
-        <Button
+        <ButtonLink
           size="lg"
           className="h-11 w-full sm:w-auto"
-          render={<Link href={`/login${parametroVoltar(`/c/${token}`)}`} />}
+          href={`/login${parametroVoltar(`/c/${token}`)}`}
         >
           <LogIn aria-hidden />
           Entrar para copiar
-        </Button>
+        </ButtonLink>
         {aviso}
       </section>
     );

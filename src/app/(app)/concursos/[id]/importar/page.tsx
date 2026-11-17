@@ -4,11 +4,15 @@ import { Suspense } from "react";
 import { ImportarEdital } from "@/components/edital/importar-edital";
 import { FormularioEsqueleto } from "@/components/layout/esqueletos";
 import { PageHeader } from "@/components/layout/page-header";
+import { iaDisponivel } from "@/lib/extracao-ia/openrouter";
 import { requireUser } from "@/server/auth";
 import { requireConcurso } from "@/server/concurso-atual";
 import { getEstruturaEdital } from "@/server/data/edital";
 
 export const metadata: Metadata = { title: "Importar edital · Ascend" };
+
+// A extração com IA (server action desta página) pode levar até 60 s.
+export const maxDuration = 90;
 
 export default function ImportarPage({
   params,
@@ -44,7 +48,11 @@ async function Importar({
         }
       />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
-        <ImportarEdital concursoId={id} existentes={existentes} />
+        <ImportarEdital
+          concursoId={id}
+          existentes={existentes}
+          iaDisponivel={iaDisponivel()}
+        />
       </main>
     </>
   );

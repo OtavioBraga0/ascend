@@ -28,8 +28,11 @@ import {
   GripVertical,
   MoreVertical,
   Pencil,
+  Info,
   Plus,
+  Sparkles,
   Trash2,
+  TriangleAlert,
 } from "lucide-react";
 import { useEffect, useReducer, useState, useTransition } from "react";
 
@@ -51,6 +54,7 @@ import {
   PESO_MAX,
   PESO_MIN,
   problemasRevisao,
+  revisaoAlterada,
   revisaoReducer,
   type AcaoRevisao,
   type MateriaRevisao,
@@ -60,21 +64,67 @@ import { chamarAction } from "@/lib/chamar-action";
 import { cn } from "@/lib/utils";
 import { salvarEditalAction } from "@/server/actions/edital";
 
+/** De onde veio a estrutura, quando o usuário podia escolher a IA. */
+export type ExtracaoRevisao = {
+  origem: "ia" | "padrao";
+  /** Observações da IA sobre o texto. */
+  avisos: string[];
+  /** Ids dos tópicos que a IA devolveu, mas não estão no texto colado. */
+  suspeitos: string[];
+  /** A IA falhou e a estrutura veio da leitura padrão. */
+  usouFallback: boolean;
+};
+
 type Props = {
   concursoId: string;
   inicial: MateriaRevisao[];
   onVoltar: () => void;
   /** Aviso sobre o que acontece com o progresso ao salvar (edição/reimportação). */
   aviso?: string;
+  extracao?: ExtracaoRevisao;
+  /** A estrutura inicial ainda não foi salva (importação): avisa ao sair mesmo sem edição. */
+  naoSalva?: boolean;
 };
+
+const NAO_ENCONTRADO =
+  "Não encontrado exatamente no texto colado. Confira antes de salvar.";
 
 const PESOS = Array.from(
   { length: PESO_MAX - PESO_MIN + 1 },
   (_, i) => PESO_MIN + i,
 );
 
-export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
-  const [materias, dispatch] = useReducer(revisaoReducer, inicial);
+export function RevisaoEdital({
+  concursoId,
+  inicial,
+  onVoltar,
+  aviso,
+  extracao,
+  naoSalva = false,
+}: Props) {
+  const [materias, aplicar] = useReducer(revisaoReducer, inicial);
+  // O destaque de um tópico suspeito some quando ele é editado ou excluído.
+  const [suspeitos, setSuspeitos] = useState(
+    () => new Set(extracao?.suspeitos),
+  );
+  function dispatch(acao: AcaoRevisao) {
+    if (
+      (acao.tipo === "renomearTopico" || acao.tipo === "excluirTopico") &&
+      suspeitos.has(acao.topicoId)
+    ) {
+      setSuspeitos((atual) => {
+        const proximo = new Set(atual);
+        proximo.delete(acao.topicoId);
+        return proximo;
+      });
+    }
+    aplicar(acao);
+  }
+  // Tópicos removidos junto com a matéria também deixam de contar.
+  const suspeitosAtuais = materias.reduce(
+    (total, m) => total + m.topicos.filter((t) => suspeitos.has(t.id)).length,
+    0,
+  );
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [arrastandoId, setArrastandoId] = useState<string | null>(null);
   const [salvando, startSalvar] = useTransition();
@@ -83,12 +133,17 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
   const totalTopicos = contarTopicos(materias);
   const problemas = problemasRevisao(materias);
 
-  // Avisa antes de sair da página com a revisão não salva.
+  // Avisa antes de sair da página só se houver algo não salvo. Durante o
+  // salvamento não avisa: a action redireciona ao terminar.
+  const pendente =
+    !salvando &&
+    ((naoSalva && materias.length > 0) || revisaoAlterada(materias, inicial));
   useEffect(() => {
+    if (!pendente) return;
     const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", avisar);
     return () => window.removeEventListener("beforeunload", avisar);
-  }, []);
+  }, [pendente]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -188,6 +243,53 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
         {aviso && (
           <p className="rounded-lg bg-muted px-3 py-2 text-sm">{aviso}</p>
         )}
+        {extracao && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {extracao.origem === "ia" && (
+              <Sparkles className="size-3.5" aria-hidden />
+            )}
+            {extracao.origem === "ia"
+              ? "Estrutura extraída com IA"
+              : "Leitura padrão"}
+          </p>
+        )}
+        {extracao?.usouFallback && (
+          <p
+            role="status"
+            className="flex gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm"
+          >
+            <TriangleAlert
+              className="mt-0.5 size-4 shrink-0 text-destructive"
+              aria-hidden
+            />
+            Não foi possível usar a IA agora. Usamos a leitura padrão. Confira a
+            estrutura.
+          </p>
+        )}
+        {suspeitosAtuais > 0 && (
+          <p
+            role="status"
+            className="flex gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm"
+          >
+            <TriangleAlert
+              className="mt-0.5 size-4 shrink-0 text-destructive"
+              aria-hidden
+            />
+            {suspeitosAtuais === 1
+              ? "1 tópico não foi encontrado exatamente no texto colado. Confira antes de salvar."
+              : `${suspeitosAtuais} tópicos não foram encontrados exatamente no texto colado. Confira antes de salvar.`}
+          </p>
+        )}
+        {extracao && extracao.avisos.length > 0 && (
+          <div className="flex gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
+            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <ul className="space-y-1">
+              {extracao.avisos.map((avisoIa, i) => (
+                <li key={i}>{avisoIa}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <DndContext
@@ -210,6 +312,7 @@ export function RevisaoEdital({ concursoId, inicial, onVoltar, aviso }: Props) {
               materias={materias}
               dispatch={dispatch}
               editandoNome={editandoId === materia.id}
+              suspeitos={suspeitos}
             />
           ))}
         </ol>
@@ -274,11 +377,13 @@ function MateriaCard({
   materias,
   dispatch,
   editandoNome,
+  suspeitos,
 }: {
   materia: MateriaRevisao;
   materias: MateriaRevisao[];
   dispatch: (acao: AcaoRevisao) => void;
   editandoNome: boolean;
+  suspeitos: Set<string>;
 }) {
   const { setNodeRef } = useDroppable({ id: materia.id });
   const [novoTopico, setNovoTopico] = useState("");
@@ -407,6 +512,7 @@ function MateriaCard({
               indice={indice}
               outras={outras}
               dispatch={dispatch}
+              suspeito={suspeitos.has(topico.id)}
             />
           ))}
         </ul>
@@ -440,12 +546,14 @@ function TopicoItem({
   indice,
   outras,
   dispatch,
+  suspeito,
 }: {
   topico: TopicoRevisao;
   materia: MateriaRevisao;
   indice: number;
   outras: MateriaRevisao[];
   dispatch: (acao: AcaoRevisao) => void;
+  suspeito: boolean;
 }) {
   const {
     attributes,
@@ -472,8 +580,10 @@ function TopicoItem({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "flex items-start gap-1 rounded-lg bg-card text-sm",
+        suspeito && "bg-destructive/5 ring-1 ring-destructive/40",
         isDragging && "opacity-40",
       )}
+      title={suspeito ? NAO_ENCONTRADO : undefined}
     >
       <button
         ref={setActivatorNodeRef}
@@ -495,6 +605,15 @@ function TopicoItem({
         }
         className="py-2"
       />
+      {suspeito && (
+        <span className="flex size-9 shrink-0 items-center justify-center">
+          <TriangleAlert
+            className="size-4 text-destructive"
+            role="img"
+            aria-label={NAO_ENCONTRADO}
+          />
+        </span>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={

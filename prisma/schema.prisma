@@ -1,4 +1,4 @@
-// Schema do Ascend (ver SPEC.md, seção 4).
+// Schema do Ascend.
 
 generator client {
   provider = "prisma-client"
@@ -21,6 +21,7 @@ model User {
   concursos     Concurso[]
   rotina        Rotina?
   copias        Copia[]
+  usosIA        UsoIA[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
@@ -65,6 +66,24 @@ model AuthAttempt {
   createdAt DateTime @default(now())
 
   @@index([email, kind, createdAt])
+}
+
+// Uso de IA: rate limit por usuário e registro de tokens e custo
+model UsoIA {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo          String // "extracao_edital"
+  modelo        String?
+  sucesso       Boolean
+  erro          String? // tipo do erro, nunca o texto
+  caracteres    Int
+  tokensEntrada Int?
+  tokensSaida   Int?
+  custoUsd      Decimal? @db.Decimal(10, 6)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 // Domínio

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 
 import { ConcursoCard } from "@/components/concursos/concurso-card";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { requireUser } from "@/server/auth";
 import { listConcursos } from "@/server/data/concursos";
 import { getProgressoConcursos } from "@/server/data/painel";
@@ -51,14 +51,10 @@ async function ListaConcursos() {
             progresso.
           </p>
         </div>
-        <Button
-          size="lg"
-          className="h-11"
-          render={<Link href="/concursos/novo" />}
-        >
+        <ButtonLink size="lg" className="h-11" href="/concursos/novo">
           <Plus aria-hidden />
           Novo concurso
-        </Button>
+        </ButtonLink>
       </div>
     );
   }

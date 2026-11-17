@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { isValidOtpCode, normalizeEmail } from "@/lib/otp";
+import {
+  decodeOtpSent,
+  encodeOtpSent,
+  isValidOtpCode,
+  normalizeEmail,
+  OTP_MAX_AGE_SECONDS,
+} from "@/lib/otp";
 import { generateOtpCode } from "@/lib/otp-code";
 
 describe("generateOtpCode", () => {
@@ -23,5 +29,36 @@ describe("isValidOtpCode", () => {
 describe("normalizeEmail", () => {
   it("remove espaços e converte para minúsculas", () => {
     expect(normalizeEmail("  Fulano@Email.COM ")).toBe("fulano@email.com");
+  });
+});
+
+describe("decodeOtpSent", () => {
+  const now = 1_800_000_000_000;
+  const email = "ana@exemplo.com";
+
+  it("devolve o momento do envio para o mesmo email", () => {
+    const sentAt = now - 5_000;
+    expect(decodeOtpSent(encodeOtpSent(email, sentAt), email, now)).toBe(
+      sentAt,
+    );
+    expect(
+      decodeOtpSent(encodeOtpSent(email, sentAt), " Ana@Exemplo.com ", now),
+    ).toBe(sentAt);
+  });
+
+  it("ignora cookie de outro email, expirado, no futuro ou inválido", () => {
+    const expirado = now - OTP_MAX_AGE_SECONDS * 1000 - 1;
+    for (const value of [
+      undefined,
+      "",
+      "lixo",
+      "null",
+      JSON.stringify({ email, sentAt: "ontem" }),
+      encodeOtpSent("outra@exemplo.com", now - 1_000),
+      encodeOtpSent(email, expirado),
+      encodeOtpSent(email, now + 60_000),
+    ]) {
+      expect(decodeOtpSent(value, email, now)).toBeUndefined();
+    }
   });
 });
