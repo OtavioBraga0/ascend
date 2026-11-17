@@ -1,11 +1,18 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { OTP_PROVIDER_ID, signIn, signOut } from "@/auth";
 import { destinoSeguro, DESTINO_PADRAO } from "@/lib/destino-login";
-import { isValidOtpCode, normalizeEmail } from "@/lib/otp";
+import {
+  encodeOtpSent,
+  isValidOtpCode,
+  normalizeEmail,
+  OTP_MAX_AGE_SECONDS,
+  OTP_SENT_COOKIE,
+} from "@/lib/otp";
 import {
   deleteVerificationTokens,
   isRateLimited,
@@ -46,7 +53,18 @@ async function sendCode(email: string): Promise<AuthFormState> {
   const error = new URL(url, "http://localhost").searchParams.get("error");
   if (error === "AccessDenied") return { error: MESSAGES.sendLimit };
   if (error) return { error: MESSAGES.sendFailed };
-  return { sentAt: Date.now() };
+
+  // Guarda o momento do envio para o contador de reenvio sobreviver a um
+  // recarregamento da página (por exemplo, depois de um código errado).
+  const sentAt = Date.now();
+  (await cookies()).set(OTP_SENT_COOKIE, encodeOtpSent(email, sentAt), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/login",
+    maxAge: OTP_MAX_AGE_SECONDS,
+  });
+  return { sentAt };
 }
 
 export async function requestCode(

@@ -22,11 +22,14 @@ export function CodeForm({
   email,
   voltar,
   initialError,
+  sentAt,
 }: {
   email: string;
   /** Para onde ir depois de entrar. */
   voltar: string;
   initialError?: string;
+  /** Momento do último envio (do cookie); sem ele, conta a partir de agora. */
+  sentAt?: number;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [code, setCode] = useState("");
@@ -38,7 +41,7 @@ export function CodeForm({
     AuthFormState,
     FormData
   >(resendCode, {});
-  const cooldown = useCooldown(resendState.sentAt);
+  const cooldown = useCooldown(resendState.sentAt ?? sentAt);
 
   // O callback do Auth.js precisa de navegação completa para gravar o cookie de sessão.
   useEffect(() => {
@@ -137,15 +140,21 @@ export function CodeForm({
   );
 }
 
-/** Segundos restantes até poder reenviar; reinicia a cada novo envio. */
+/** Segundos restantes até poder reenviar, contados do último envio. */
 function useCooldown(sentAt: number | undefined) {
   const [startedAt] = useState(() => Date.now());
   const since = sentAt ?? startedAt;
   const [now, setNow] = useState(since);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    const tick = () => setNow(Date.now());
+    // Atualiza já ao montar: o envio pode ter sido antes do carregamento da página.
+    const first = setTimeout(tick, 0);
+    const id = setInterval(tick, 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [since]);
 
   const elapsed = Math.floor((Math.max(now, since) - since) / 1000);

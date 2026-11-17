@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { CodeForm } from "@/components/auth/code-form";
 import { destinoSeguro } from "@/lib/destino-login";
+import { decodeOtpSent, OTP_SENT_COOKIE } from "@/lib/otp";
 
 export const metadata: Metadata = { title: "Código de acesso · Ascend" };
 
@@ -26,6 +28,10 @@ async function CodeStep({
 }: Pick<PageProps<"/login/codigo">, "searchParams">) {
   const { email, erro, voltar } = await searchParams;
   if (typeof email !== "string" || !email) redirect("/login");
+  const sentAt = decodeOtpSent(
+    (await cookies()).get(OTP_SENT_COOKIE)?.value,
+    email,
+  );
 
   return (
     <div className="space-y-6">
@@ -40,6 +46,7 @@ async function CodeStep({
       <CodeForm
         email={email}
         voltar={destinoSeguro(voltar)}
+        sentAt={sentAt}
         initialError={typeof erro === "string" ? ERRORS[erro] : undefined}
       />
     </div>
