@@ -61,7 +61,7 @@ const MAX_PROPORCAO_CAIXA_ALTA = 0.6;
 const MAX_TAMANHO_CABECALHO = 80;
 
 export function parseEdital(texto: string): MateriaParseada[] {
-  const linhas = normalizar(texto);
+  const linhas = normalizarLinhas(texto);
   const capsAtivo = proporcaoCaixaAlta(linhas) <= MAX_PROPORCAO_CAIXA_ALTA;
 
   const grupos: { nome: string; linhas: string[] }[] = [
@@ -113,7 +113,11 @@ export function parseEdital(texto: string): MateriaParseada[] {
     .filter((materia) => materia.topicos.length > 0);
 }
 
-function normalizar(texto: string): string[] {
+/**
+ * Quebras de linha, espaços, hifenização de PDF e números de página. Devolve
+ * as linhas não vazias.
+ */
+export function normalizarLinhas(texto: string): string[] {
   return texto
     .replace(/\r\n?/g, "\n")
     .replace(/[\t   ]/g, " ")
@@ -121,6 +125,11 @@ function normalizar(texto: string): string[] {
     .split("\n")
     .map((linha) => linha.replace(/ {2,}/g, " ").trim())
     .filter((linha) => linha && !ehNumeroDePagina(linha));
+}
+
+/** O texto normalizado, para mandar à IA e conferir a fidelidade. */
+export function normalizarTexto(texto: string): string {
+  return normalizarLinhas(texto).join("\n");
 }
 
 function ehNumeroDePagina(linha: string) {
@@ -175,7 +184,8 @@ function ehMateriaConhecida(texto: string) {
     });
 }
 
-function limparNome(nome: string) {
+/** Nome de matéria sem pontuação nem espaços no fim. */
+export function limparNome(nome: string) {
   return nome.replace(/[\s:.\-–]+$/u, "").trim();
 }
 
@@ -230,9 +240,17 @@ function juntar(anterior: string, linha: string) {
 }
 
 function extrairTopicos(linhas: string[]): string[] {
+  return limparTopicos(linhas.flatMap(dividirLinha));
+}
+
+/**
+ * Tira marcadores, numeração e pontuação final de cada tópico e descarta os
+ * vazios e os duplicados exatos (na ordem em que aparecem).
+ */
+export function limparTopicos(brutos: string[]): string[] {
   const vistos = new Set<string>();
   const topicos: string[] = [];
-  for (const topico of linhas.flatMap(dividirLinha).map(limparTopico)) {
+  for (const topico of brutos.map(limparTopico)) {
     // Ignora pedaços sem texto (ex.: só a numeração) e duplicados exatos.
     if (!/\p{L}.*\p{L}/u.test(topico) || vistos.has(topico)) continue;
     vistos.add(topico);

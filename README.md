@@ -23,6 +23,20 @@ O texto colado passa pelo parser (`src/lib/parser-edital.ts`), que gera a árvor
 
 Antes de salvar, a tela de revisão permite renomear, excluir, adicionar, mover e reordenar tópicos e matérias, mesclar matérias e definir pesos. Tudo é gravado em uma transação.
 
+#### Extração com IA
+
+Para editais que o parser lê mal (texto bagunçado do PDF, matérias fora de caixa alta, numeração quebrada), há o botão **Extrair com IA**, no passo de colar o edital e na reimportação. Ele só aparece quando `OPENROUTER_API_KEY` está definida. O código fica em `src/lib/extracao-ia/`, e a server action em `src/server/actions/extrair-edital-ia.ts`.
+
+1. O texto passa pela mesma normalização do parser e precisa ter de 50 a 120.000 caracteres.
+2. O servidor manda o texto ao OpenRouter, com saída estruturada (JSON Schema estrito), `temperature: 0`, timeout de 60 s e os modelos reserva, se houver. O prompt segue as convenções do parser: texto dos tópicos copiado literalmente, subtópicos como tópicos próprios, nome da matéria como está no edital e "Sem matéria" para tópicos soltos. O texto do usuário vai entre `<edital>` e `</edital>` e é tratado como dado, nunca como instrução.
+3. A resposta é validada de novo com Zod e pós-processada com as regras do parser: limpeza, descarte de vazios e duplicados e junção de matérias com o mesmo nome. O resultado tem o mesmo formato da leitura padrão e vai para a mesma tela de revisão. Daí em diante nada muda: a reimportação preserva o progresso do mesmo jeito.
+4. **Verificação de fidelidade:** cada tópico é procurado no texto colado, ignorando acentos, caixa, pontuação e espaços. Ele passa se aparecer como trecho do texto ou se pelo menos 80% das palavras significativas dele aparecerem perto umas das outras. Os que não passam não são removidos: a revisão mostra quantos são e destaca cada um, e o destaque some quando o tópico é editado.
+5. **Fallback:** se a IA falhar (timeout, erro HTTP, resposta inválida, truncada ou vazia), o app usa a leitura padrão no mesmo texto e avisa na revisão.
+
+A revisão indica a origem da estrutura ("Estrutura extraída com IA" ou "Leitura padrão") e mostra as observações que a IA fez sobre o texto.
+
+**Rate limit:** 5 extrações por hora e 20 por dia por usuário, contando sucessos e falhas. Ao passar do limite, a tela diz a partir de quando dá para tentar de novo, e a leitura padrão continua disponível. Cada tentativa fica registrada em `UsoIA`, com modelo, tokens, custo e tipo do erro, mas nunca o texto do edital. A chave só existe no servidor, e os logs registram só o tipo do erro, o status, o modelo e o tamanho do texto.
+
 ### Editar estrutura e reimportar
 
 Depois de salva, a estrutura pode ser editada em `/concursos/[id]/estrutura` ou trocada por uma reimportação. Nos dois casos o progresso é preservado (`src/lib/sincronizar-edital.ts`): tópicos existentes são reaproveitados pelo id (edição) ou pelo nome/título normalizado (reimportação), e só o que sobrar da estrutura antiga é excluído.
@@ -93,6 +107,8 @@ cp .env.example .env
 # DIRECT_URL="postgresql://ascend:ascend@localhost:5433/ascend"
 # Gere o AUTH_SECRET com: npx auth secret   (ou: openssl rand -base64 32)
 # Sem as variáveis GMAIL_OAUTH_*, em desenvolvimento o código de login sai no console.
+# Opcional: OPENROUTER_API_KEY, OPENROUTER_MODEL e OPENROUTER_FALLBACK_MODELS ligam a
+# extração do edital com IA. Sem a chave, o botão não aparece.
 
 # 3. Banco de dados
 docker compose up -d        # Postgres 17 na porta 5433
@@ -129,6 +145,8 @@ A Vercel usa o script `vercel-build`. Nos deploys de **produção** (`VERCEL_ENV
 
 Configure na Vercel, no ambiente Production, `DATABASE_URL` (pooler, porta 6543) e `DIRECT_URL` (conexão direta ou Session pooler, porta 5432). As migrations usam a `DIRECT_URL`. Para aplicar migrations manualmente: `npm run db:deploy`.
 
+Para ligar a extração com IA, configure também no ambiente Production `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (um modelo com suporte a structured outputs) e, se quiser, `OPENROUTER_FALLBACK_MODELS` (separados por vírgula). A página de importação tem `maxDuration = 90`, para a chamada caber no limite da função.
+
 ## Login
 
 Login sem senha: o usuário informa o email e recebe um código de 6 dígitos (válido por 10 min), enviado pelo Gmail via OAuth2. O código é validado pelo callback do Auth.js (`/api/auth/callback/otp`). Limites: 3 envios e 5 tentativas de código por email a cada 15 minutos. Depois de entrar, o usuário volta para a página que tinha pedido (por exemplo, um link de compartilhamento).
@@ -141,23 +159,26 @@ O app é instalável (manifest em `src/app/manifest.ts`, ícones em `public/icon
 
 ## Testes
 
-`npm test` roda os testes unitários da lógica pura, que ficam ao lado do código em `src/lib/*.test.ts`: parser e revisão do edital, sincronização da estrutura, progresso, agenda, datas, filtro do edital, OTP, navegação, destino do login e validações. Os testes não precisam de banco. Os fixtures do parser estão em `src/lib/__fixtures__/`.
+`npm test` roda os testes unitários da lógica pura, que ficam ao lado do código em `src/lib/*.test.ts`: parser e revisão do edital, sincronização da estrutura, progresso, agenda, datas, filtro do edital, OTP, navegação, destino do login e validações. Os testes da extração com IA ficam em `src/lib/extracao-ia/*.test.ts` (schema, prompt, cliente do OpenRouter com `fetch` simulado, pós-processamento, fidelidade, limites e rate limit). Os testes não precisam de banco nem de rede. Os fixtures do parser estão em `src/lib/__fixtures__/`.
+
+Para comparar a IA com o parser nos fixtures (número de matérias e tópicos, diferenças, tópicos não encontrados, tempo, tokens e custo), use `npm run avaliar:ia`. Ele chama a API de verdade e precisa da chave no `.env`, por isso fica fora do `npm test`. Para rodar um fixture só: `npm run avaliar:ia -- pdf-baguncado`.
 
 ## Scripts
 
-| Comando                           | O que faz                                                  |
-| --------------------------------- | ---------------------------------------------------------- |
-| `npm run dev`                     | Servidor de desenvolvimento                                |
-| `npm run build`                   | Gera o Prisma Client e faz o build de produção             |
-| `npm start`                       | Sobe o build de produção                                   |
-| `npm run lint`                    | ESLint                                                     |
-| `npm run typecheck`               | `tsc --noEmit`                                             |
-| `npm test` / `test:watch`         | Testes unitários (Vitest), uma vez ou em modo watch        |
-| `npm run format` / `format:check` | Prettier                                                   |
-| `npm run db:migrate`              | Cria/aplica migrations em desenvolvimento                  |
-| `npm run db:deploy`               | Aplica migrations em produção                              |
-| `npm run db:seed`                 | Concurso de exemplo para `SEED_EMAIL` (pode rodar de novo) |
-| `npm run db:studio`               | Prisma Studio                                              |
+| Comando                           | O que faz                                                      |
+| --------------------------------- | -------------------------------------------------------------- |
+| `npm run dev`                     | Servidor de desenvolvimento                                    |
+| `npm run build`                   | Gera o Prisma Client e faz o build de produção                 |
+| `npm start`                       | Sobe o build de produção                                       |
+| `npm run lint`                    | ESLint                                                         |
+| `npm run typecheck`               | `tsc --noEmit`                                                 |
+| `npm test` / `test:watch`         | Testes unitários (Vitest), uma vez ou em modo watch            |
+| `npm run format` / `format:check` | Prettier                                                       |
+| `npm run db:migrate`              | Cria/aplica migrations em desenvolvimento                      |
+| `npm run db:deploy`               | Aplica migrations em produção                                  |
+| `npm run db:seed`                 | Concurso de exemplo para `SEED_EMAIL` (pode rodar de novo)     |
+| `npm run db:studio`               | Prisma Studio                                                  |
+| `npm run avaliar:ia`              | Compara IA e parser nos fixtures (chama a API, gasta créditos) |
 
 ## Estrutura
 
@@ -166,10 +187,12 @@ prisma/              schema, migrations e seed (TS e SQL)
 src/app/             rotas (App Router)
 src/components/      componentes por área (agenda, edital, painel...) e ui/ (shadcn/ui)
 src/lib/             lógica pura (parser, progresso, agenda...), validações Zod e clientes (prisma, email)
+src/lib/extracao-ia/ extração do edital com IA (schema, prompt, cliente OpenRouter, pós-processamento)
 src/server/actions/  server actions
 src/server/data/     acesso a dados (sempre filtrado por userId)
 src/proxy.ts         proteção das rotas
 src/generated/       Prisma Client gerado (não versionado)
+scripts/             scripts manuais (avaliação da extração com IA)
 ```
 
 ## Convenções
