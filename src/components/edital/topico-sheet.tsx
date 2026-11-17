@@ -18,7 +18,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { STATUS_INFO, STATUS_ORDEM, type StatusTopico } from "@/lib/status";
 import { chamarAction } from "@/lib/chamar-action";
 import { cn } from "@/lib/utils";
-import { MAX_LINKS, MAX_NOTA, normalizarLink } from "@/lib/validacao/topico";
+import {
+  LINK_INVALIDO,
+  MAX_LINKS,
+  MAX_NOTA,
+  validarLink,
+} from "@/lib/validacao/topico";
 import { salvarDetalhes } from "@/server/actions/topicos";
 import type { TopicoEdital } from "@/server/data/topicos";
 
@@ -64,29 +69,30 @@ function DetalhesForm({
   const [links, setLinks] = useState(topico.links);
   const [novoLink, setNovoLink] = useState("");
   const [erro, setErro] = useState<string>();
+  const [erroLink, setErroLink] = useState<string>();
   const [salvando, startSalvar] = useTransition();
 
   function adicionarLink(e: React.FormEvent) {
     e.preventDefault();
-    const link = novoLink.trim();
-    if (!link) return;
-    const normalizado = normalizarLink(link);
-    if (
-      !URL.canParse(normalizado) ||
-      !/^https?:$/.test(new URL(normalizado).protocol)
-    ) {
-      setErro("Link inválido.");
+    if (!novoLink.trim()) return;
+    const normalizado = validarLink(novoLink);
+    if (!normalizado) {
+      setErroLink(LINK_INVALIDO);
       return;
     }
-    setErro(undefined);
+    setErroLink(undefined);
     if (!links.includes(normalizado)) setLinks([...links, normalizado]);
     setNovoLink("");
   }
 
   function salvar() {
     setErro(undefined);
-    // Um link digitado e não adicionado também é salvo.
-    const pendente = novoLink.trim() ? normalizarLink(novoLink) : null;
+    // Um link digitado e não adicionado também é salvo, se for válido.
+    const pendente = novoLink.trim() ? validarLink(novoLink) : null;
+    if (novoLink.trim() && !pendente) {
+      setErroLink(LINK_INVALIDO);
+      return;
+    }
     const todosLinks =
       pendente && !links.includes(pendente) ? [...links, pendente] : links;
     startSalvar(async () => {
@@ -196,7 +202,12 @@ function DetalhesForm({
                 type="url"
                 inputMode="url"
                 value={novoLink}
-                onChange={(e) => setNovoLink(e.target.value)}
+                onChange={(e) => {
+                  setNovoLink(e.target.value);
+                  setErroLink(undefined);
+                }}
+                aria-invalid={!!erroLink}
+                aria-describedby={erroLink ? "novo-link-erro" : undefined}
                 placeholder="Cole um link de aula, PDF, lei…"
                 className="h-10 text-base md:text-sm"
               />
@@ -210,6 +221,15 @@ function DetalhesForm({
                 <Plus aria-hidden />
               </Button>
             </form>
+          )}
+          {erroLink && (
+            <p
+              id="novo-link-erro"
+              role="alert"
+              className="text-sm text-destructive"
+            >
+              {erroLink}
+            </p>
           )}
         </div>
 

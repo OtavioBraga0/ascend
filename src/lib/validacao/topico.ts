@@ -11,6 +11,22 @@ export function normalizarLink(link: string): string {
   return /^[a-z][a-z\d+.-]*:\/\//i.test(texto) ? texto : `https://${texto}`;
 }
 
+export const LINK_INVALIDO =
+  "Link inválido. Use um endereço como planalto.gov.br/lei.";
+
+/**
+ * Normaliza e valida um link: só http(s), com domínio de verdade (ponto e
+ * TLD com 2 letras ou mais). Devolve o link normalizado ou `null`.
+ */
+export function validarLink(link: string): string | null {
+  const normalizado = normalizarLink(link);
+  if (!URL.canParse(normalizado)) return null;
+  const { protocol, hostname } = new URL(normalizado);
+  if (protocol !== "http:" && protocol !== "https:") return null;
+  if (!/\.[a-z]{2,}$/i.test(hostname)) return null;
+  return normalizado;
+}
+
 export const statusSchema = z.enum(StatusTopico, "Status inválido.");
 
 const linkSchema = z
@@ -18,8 +34,14 @@ const linkSchema = z
   .trim()
   .min(1)
   .max(2000)
-  .transform(normalizarLink)
-  .pipe(z.url({ protocol: /^https?$/, error: "Link inválido." }));
+  .transform((link, ctx) => {
+    const valido = validarLink(link);
+    if (!valido) {
+      ctx.addIssue({ code: "custom", message: LINK_INVALIDO });
+      return z.NEVER;
+    }
+    return valido;
+  });
 
 export const detalhesTopicoSchema = z.object({
   status: statusSchema,
