@@ -54,6 +54,7 @@ import {
   PESO_MAX,
   PESO_MIN,
   problemasRevisao,
+  revisaoAlterada,
   revisaoReducer,
   type AcaoRevisao,
   type MateriaRevisao,
@@ -81,6 +82,8 @@ type Props = {
   /** Aviso sobre o que acontece com o progresso ao salvar (edição/reimportação). */
   aviso?: string;
   extracao?: ExtracaoRevisao;
+  /** A estrutura inicial ainda não foi salva (importação): avisa ao sair mesmo sem edição. */
+  naoSalva?: boolean;
 };
 
 const NAO_ENCONTRADO =
@@ -97,6 +100,7 @@ export function RevisaoEdital({
   onVoltar,
   aviso,
   extracao,
+  naoSalva = false,
 }: Props) {
   const [materias, aplicar] = useReducer(revisaoReducer, inicial);
   // O destaque de um tópico suspeito some quando ele é editado ou excluído.
@@ -129,12 +133,17 @@ export function RevisaoEdital({
   const totalTopicos = contarTopicos(materias);
   const problemas = problemasRevisao(materias);
 
-  // Avisa antes de sair da página com a revisão não salva.
+  // Avisa antes de sair da página só se houver algo não salvo. Durante o
+  // salvamento não avisa: a action redireciona ao terminar.
+  const pendente =
+    !salvando &&
+    ((naoSalva && materias.length > 0) || revisaoAlterada(materias, inicial));
   useEffect(() => {
+    if (!pendente) return;
     const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", avisar);
     return () => window.removeEventListener("beforeunload", avisar);
-  }, []);
+  }, [pendente]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),

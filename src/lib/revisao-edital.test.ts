@@ -4,7 +4,9 @@ import {
   contarTopicos,
   criarRevisao,
   problemasRevisao,
+  revisaoAlterada,
   revisaoReducer,
+  type AcaoRevisao,
   type MateriaRevisao,
 } from "@/lib/revisao-edital";
 
@@ -168,5 +170,58 @@ describe("revisaoReducer", () => {
       "Há tópicos sem texto.",
     ]);
     expect(problemasRevisao([])).toEqual(["Adicione pelo menos uma matéria."]);
+  });
+});
+
+describe("revisaoAlterada", () => {
+  const inicial: MateriaRevisao[] = [
+    {
+      id: "m1",
+      nome: "Português",
+      peso: 2,
+      topicos: [
+        { id: "t1", titulo: "Crase" },
+        { id: "t2", titulo: "Pontuação" },
+      ],
+    },
+    { id: "m2", nome: "Matemática", peso: 1, topicos: [] },
+  ];
+
+  it("sem ações, ou com ações que não mudam nada, não está alterada", () => {
+    expect(revisaoAlterada(inicial, inicial)).toBe(false);
+    const mesmoPeso = revisaoReducer(inicial, {
+      tipo: "definirPeso",
+      materiaId: "m1",
+      peso: 2,
+    });
+    expect(revisaoAlterada(mesmoPeso, inicial)).toBe(false);
+    const ida = revisaoReducer(inicial, {
+      tipo: "moverTopico",
+      topicoId: "t1",
+      paraMateriaId: "m1",
+      indice: 1,
+    });
+    const volta = revisaoReducer(ida, {
+      tipo: "moverTopico",
+      topicoId: "t1",
+      paraMateriaId: "m1",
+      indice: 0,
+    });
+    expect(revisaoAlterada(volta, inicial)).toBe(false);
+  });
+
+  it.each<AcaoRevisao>([
+    { tipo: "renomearMateria", materiaId: "m1", nome: "Língua Portuguesa" },
+    { tipo: "definirPeso", materiaId: "m2", peso: 3 },
+    { tipo: "excluirMateria", materiaId: "m2" },
+    { tipo: "adicionarMateria", id: "m3", nome: "Nova matéria" },
+    { tipo: "renomearTopico", topicoId: "t2", titulo: "Pontuação e vírgula" },
+    { tipo: "excluirTopico", topicoId: "t1" },
+    { tipo: "adicionarTopico", materiaId: "m2", id: "t3", titulo: "Juros" },
+    { tipo: "moverTopico", topicoId: "t1", paraMateriaId: "m1", indice: 1 },
+    { tipo: "moverTopico", topicoId: "t1", paraMateriaId: "m2", indice: 0 },
+    { tipo: "mesclarMaterias", origemId: "m2", destinoId: "m1" },
+  ])("$tipo altera a revisão", (acao) => {
+    expect(revisaoAlterada(revisaoReducer(inicial, acao), inicial)).toBe(true);
   });
 });

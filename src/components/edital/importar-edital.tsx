@@ -151,6 +151,7 @@ export function ImportarEdital({
           onVoltar={() => setRevisao(null)}
           aviso={reimportacao ? AVISO_REIMPORTACAO : undefined}
           extracao={revisao.extracao}
+          naoSalva
         />
       </div>
     );
