@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { parseEdital, SEM_MATERIA } from "@/lib/parser-edital";
+import {
+  formatarNomeMateria,
+  parseEdital,
+  SEM_MATERIA,
+} from "@/lib/parser-edital";
 
 const fixture = (nome: string) =>
   readFileSync(new URL(`./__fixtures__/${nome}`, import.meta.url), "utf8");
@@ -11,7 +15,7 @@ describe("parseEdital — fixtures", () => {
   it("matérias em caixa alta com tópicos numerados e marcadores", () => {
     expect(parseEdital(fixture("caixa-alta-numerado.txt"))).toEqual([
       {
-        nome: "LÍNGUA PORTUGUESA",
+        nome: "Língua Portuguesa",
         topicos: [
           "Leitura e interpretação de textos",
           "Ortografia oficial",
@@ -23,7 +27,7 @@ describe("parseEdital — fixtures", () => {
         ],
       },
       {
-        nome: "NOÇÕES DE DIREITO PENAL",
+        nome: "Noções de Direito Penal",
         topicos: [
           "Infração penal: elementos e espécies",
           "Sujeito ativo e sujeito passivo da infração penal",
@@ -31,7 +35,7 @@ describe("parseEdital — fixtures", () => {
         ],
       },
       {
-        nome: "NOÇÕES DE INFORMÁTICA",
+        nome: "Noções de Informática",
         topicos: [
           "MS-Windows 10: conceito de pastas, diretórios e arquivos",
           "MS-Word 2016: estrutura básica dos documentos",
@@ -75,7 +79,7 @@ describe("parseEdital — fixtures", () => {
   it("texto de PDF com hifenização, quebras de linha e números de página", () => {
     expect(parseEdital(fixture("pdf-baguncado.txt"))).toEqual([
       {
-        nome: "LÍNGUA PORTUGUESA",
+        nome: "Língua Portuguesa",
         topicos: [
           "Leitura e interpretação de diversos tipos de textos (literários e não literários)",
           "Sinônimos e antônimos",
@@ -89,7 +93,7 @@ describe("parseEdital — fixtures", () => {
         ],
       },
       {
-        nome: "NOÇÕES DE DIREITO ADMINISTRATIVO E LEGISLAÇÃO ESPECÍFICA",
+        nome: "Noções de Direito Administrativo e Legislação Específica",
         topicos: [
           "Princípios básicos da Administração Pública previstos no art. 37 da Constituição Federal",
           "Atos administrativos: conceito, requisitos e atributos",
@@ -102,7 +106,7 @@ describe("parseEdital — fixtures", () => {
   it("formato Cebraspe com numeração na mesma linha da matéria", () => {
     expect(parseEdital(fixture("cebraspe-inline.txt"))).toEqual([
       {
-        nome: "LÍNGUA PORTUGUESA",
+        nome: "Língua Portuguesa",
         topicos: [
           "Compreensão e interpretação de textos de gêneros variados",
           "Reconhecimento de tipos e gêneros textuais",
@@ -113,7 +117,7 @@ describe("parseEdital — fixtures", () => {
         ],
       },
       {
-        nome: "NOÇÕES DE DIREITO CONSTITUCIONAL",
+        nome: "Noções de Direito Constitucional",
         topicos: [
           "Constituição da República Federativa do Brasil de 1988",
           "Direitos e garantias fundamentais (art. 5 da CF)",
@@ -133,7 +137,7 @@ describe("parseEdital — regras", () => {
   it("tópicos antes de qualquer matéria vão para 'Sem matéria'", () => {
     expect(parseEdital("Crase; Pontuação\nMATEMÁTICA\nPorcentagem")).toEqual([
       { nome: SEM_MATERIA, topicos: ["Crase", "Pontuação"] },
-      { nome: "MATEMÁTICA", topicos: ["Porcentagem"] },
+      { nome: "Matemática", topicos: ["Porcentagem"] },
     ]);
   });
 
@@ -155,7 +159,7 @@ describe("parseEdital — regras", () => {
       ),
     ).toEqual([
       {
-        nome: "DIREITO CIVIL",
+        nome: "Direito Civil",
         topicos: [
           "Pessoas naturais",
           "Bens (art. 79 do CC)",
@@ -172,7 +176,7 @@ describe("parseEdital — regras", () => {
       ),
     ).toEqual([
       {
-        nome: "ÉTICA",
+        nome: "Ética",
         topicos: ["Princípios", "deveres", "Vedações", "Penalidades"],
       },
     ]);
@@ -182,7 +186,7 @@ describe("parseEdital — regras", () => {
     const texto = "LÍNGUA PORTUGUESA\nCRASE\nPONTUAÇÃO\nREGÊNCIA";
     expect(parseEdital(texto)).toEqual([
       {
-        nome: "LÍNGUA PORTUGUESA",
+        nome: "Língua Portuguesa",
         topicos: ["CRASE", "PONTUAÇÃO", "REGÊNCIA"],
       },
     ]);
@@ -197,5 +201,46 @@ describe("parseEdital — regras", () => {
         topicos: ["Direito de punir do Estado"],
       },
     ]);
+  });
+});
+
+describe("formatarNomeMateria", () => {
+  it.each([
+    ["LÍNGUA PORTUGUESA", "Língua Portuguesa"],
+    ["NOÇÕES DE DIREITO PENAL", "Noções de Direito Penal"],
+    ["DIREITO PENAL E PROCESSUAL PENAL", "Direito Penal e Processual Penal"],
+    ["LEGISLAÇÃO ESPECIAL", "Legislação Especial"],
+    ["ÉTICA NO SERVIÇO PÚBLICO", "Ética no Serviço Público"],
+    ["DE OLHO NA LEI", "De Olho na Lei"],
+    ["DIREITO CIVIL", "Direito Civil"],
+  ])("%s → %s", (nome, esperado) => {
+    expect(formatarNomeMateria(nome)).toBe(esperado);
+  });
+
+  it("mantém siglas, numerais romanos e palavras com números", () => {
+    expect(formatarNomeMateria("DIREITO PENAL II")).toBe("Direito Penal II");
+    expect(formatarNomeMateria("NOÇÕES DE TI")).toBe("Noções de TI");
+    expect(formatarNomeMateria("LEGISLAÇÃO DO SUS")).toBe("Legislação do SUS");
+    expect(formatarNomeMateria("CONSTITUIÇÃO FEDERAL (CF/88)")).toBe(
+      "Constituição Federal (CF/88)",
+    );
+    expect(formatarNomeMateria("LEI Nº 8.112/1990")).toBe("Lei nº 8.112/1990");
+  });
+
+  it("capitaliza depois de parênteses e aspas", () => {
+    expect(formatarNomeMateria("ATUALIDADES (TEMAS GERAIS)")).toBe(
+      "Atualidades (Temas Gerais)",
+    );
+  });
+
+  it("não mexe em nomes com maiúsculas e minúsculas", () => {
+    for (const nome of [
+      "Língua Portuguesa",
+      "Noções de Direito Penal",
+      "Raciocínio Lógico-Matemático",
+      SEM_MATERIA,
+    ]) {
+      expect(formatarNomeMateria(nome)).toBe(nome);
+    }
   });
 });

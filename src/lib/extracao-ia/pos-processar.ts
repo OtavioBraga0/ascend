@@ -1,5 +1,6 @@
 import { normalizarBusca } from "@/lib/filtro-edital";
 import {
+  formatarNomeMateria,
   limparNome,
   limparTopicos,
   normalizarTexto,
@@ -60,7 +61,7 @@ export function posProcessar(
 ): ResultadoPosProcessado {
   const porNome = new Map<string, { nome: string; brutos: string[] }>();
   for (const materia of resposta.materias) {
-    const nome = limparNome(espacos(materia.nome));
+    const nome = formatarNomeMateria(limparNome(espacos(materia.nome)));
     if (!nome) continue;
     const chave = normalizarBusca(nome);
     const existente = porNome.get(chave);

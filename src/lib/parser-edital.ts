@@ -107,7 +107,7 @@ export function parseEdital(texto: string): MateriaParseada[] {
 
   return grupos
     .map((grupo) => ({
-      nome: grupo.nome,
+      nome: formatarNomeMateria(grupo.nome),
       topicos: extrairTopicos(grupo.linhas),
     }))
     .filter((materia) => materia.topicos.length > 0);
@@ -182,6 +182,56 @@ function ehMateriaConhecida(texto: string) {
       const letra = palavra.match(/\p{L}/u)?.[0] ?? "";
       return letra === letra.toUpperCase();
     });
+}
+
+/** Siglas comuns em nomes de matérias, que continuam em maiúsculas. */
+const SIGLAS = new Set([
+  "CF",
+  "CLT",
+  "CPC",
+  "CPP",
+  "CTN",
+  "ECA",
+  "MP",
+  "MPE",
+  "MPU",
+  "ONU",
+  "SUS",
+  "TI",
+  "TIC",
+  "TJ",
+  "UE",
+]);
+
+/** I a XXXIX: "Direito Penal II". Não pega palavras como "DI" ou "MIL". */
+const NUMERAL_ROMANO = /^(?=[IVX])X{0,3}(IX|IV|V?I{0,3})$/;
+
+/**
+ * Nome de matéria em CAIXA ALTA vira Title Case, com conectores em minúsculas
+ * ("NOÇÕES DE DIREITO PENAL" → "Noções de Direito Penal"). Siglas, numerais
+ * romanos e palavras com números ficam como estão. Nomes que já vêm com
+ * maiúsculas e minúsculas não mudam.
+ */
+export function formatarNomeMateria(nome: string): string {
+  if (!ehCaixaAlta(nome)) return nome;
+  return nome
+    .split(" ")
+    .map((palavra, i) => {
+      const letras = palavra.replace(/[^\p{L}]/gu, "");
+      if (
+        SIGLAS.has(letras) ||
+        NUMERAL_ROMANO.test(letras) ||
+        /\d/.test(palavra)
+      )
+        return palavra;
+      const minuscula = palavra.toLocaleLowerCase("pt-BR");
+      if (i > 0 && CONECTORES.has(minuscula)) return minuscula;
+      // Primeira letra, mesmo depois de "(" ou aspas.
+      return minuscula.replace(/\p{L}/u, (letra) =>
+        letra.toLocaleUpperCase("pt-BR"),
+      );
+    })
+    .join(" ");
 }
 
 /** Nome de matéria sem pontuação nem espaços no fim. */

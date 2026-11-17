@@ -60,7 +60,7 @@ describe("posProcessar — limpeza", () => {
     );
     expect(estrutura).toEqual([
       {
-        nome: "PORTUGUÊS",
+        nome: "Português",
         topicos: ["Crase", "Pontuação", "Regência", "Porcentagem"],
       },
     ]);
@@ -83,6 +83,20 @@ describe("posProcessar — limpeza", () => {
       { nome: "Língua Portuguesa", topicos: ["Crase e pontuação"] },
     ]);
     expect(avisos).toEqual(["aviso com espaços"]);
+  });
+
+  it("converte nomes em caixa alta como a leitura padrão", () => {
+    const { estrutura } = posProcessar(
+      resposta([
+        { nome: "NOÇÕES DE DIREITO PENAL", topicos: ["Crase"] },
+        { nome: "Raciocínio Lógico", topicos: ["Porcentagem"] },
+      ]),
+      texto,
+    );
+    expect(estrutura.map((m) => m.nome)).toEqual([
+      "Noções de Direito Penal",
+      "Raciocínio Lógico",
+    ]);
   });
 
   it("junta matérias de mesmo nome, mantendo a ordem da primeira", () => {
@@ -158,9 +172,9 @@ describe("posProcessar — fidelidade", () => {
     );
     expect(resultado.estrutura[0].topicos).toHaveLength(3);
     expect(resultado.topicosNaoEncontrados).toEqual([
-      { materia: "LÍNGUA PORTUGUESA", topico: "Figuras de linguagem" },
+      { materia: "Língua Portuguesa", topico: "Figuras de linguagem" },
       {
-        materia: "LÍNGUA PORTUGUESA",
+        materia: "Língua Portuguesa",
         topico: "Análise sintática do período composto",
       },
     ]);
@@ -169,7 +183,7 @@ describe("posProcessar — fidelidade", () => {
   it("reprova palavras que existem no texto, mas longe umas das outras", () => {
     // "Leitura" (início) e "Crase" (fim do bloco) estão distantes.
     expect(naoEncontrados(["Leitura da crase"])).toEqual([
-      { materia: "LÍNGUA PORTUGUESA", topico: "Leitura da crase" },
+      { materia: "Língua Portuguesa", topico: "Leitura da crase" },
     ]);
   });
 });

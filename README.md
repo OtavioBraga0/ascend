@@ -20,6 +20,7 @@ O texto colado passa pelo parser (`src/lib/parser-edital.ts`), que gera a árvor
 - detecta matéria em linha toda em CAIXA ALTA, terminada em `:` ou com padrões comuns (`NOÇÕES DE ...`, `DIREITO ...`, `LÍNGUA PORTUGUESA`...);
 - detecta tópicos numerados (`1.`, `1.1`, `a)`, `I -`, `•`, `-`) ou em texto corrido separado por `;`. Subtópicos viram tópicos próprios (não há hierarquia além de matéria → tópico);
 - o que não se encaixa vai para "Sem matéria"; tópicos vazios e duplicados são descartados.
+- nomes de matéria em CAIXA ALTA viram Title Case, com conectores em minúsculas ("NOÇÕES DE DIREITO PENAL" → "Noções de Direito Penal"). Siglas comuns (TI, SUS, CF…), numerais romanos e palavras com números ficam como estão. Nomes com maiúsculas e minúsculas não mudam.
 
 Antes de salvar, a tela de revisão permite renomear, excluir, adicionar, mover e reordenar tópicos e matérias, mesclar matérias e definir pesos. Tudo é gravado em uma transação.
 
@@ -29,7 +30,7 @@ Para editais que o parser lê mal (texto bagunçado do PDF, matérias fora de ca
 
 1. O texto passa pela mesma normalização do parser e precisa ter de 50 a 120.000 caracteres.
 2. O servidor manda o texto ao OpenRouter, com saída estruturada (JSON Schema estrito), `temperature: 0`, timeout de 60 s e os modelos reserva, se houver. O prompt segue as convenções do parser: texto dos tópicos copiado literalmente, subtópicos como tópicos próprios, nome da matéria como está no edital e "Sem matéria" para tópicos soltos. O texto do usuário vai entre `<edital>` e `</edital>` e é tratado como dado, nunca como instrução.
-3. A resposta é validada de novo com Zod e pós-processada com as regras do parser: limpeza, descarte de vazios e duplicados e junção de matérias com o mesmo nome. O resultado tem o mesmo formato da leitura padrão e vai para a mesma tela de revisão. Daí em diante nada muda: a reimportação preserva o progresso do mesmo jeito.
+3. A resposta é validada de novo com Zod e pós-processada com as regras do parser: limpeza, descarte de vazios e duplicados, Title Case nos nomes em caixa alta e junção de matérias com o mesmo nome. O resultado tem o mesmo formato da leitura padrão e vai para a mesma tela de revisão. Daí em diante nada muda: a reimportação preserva o progresso do mesmo jeito.
 4. **Verificação de fidelidade:** cada tópico é procurado no texto colado, ignorando acentos, caixa, pontuação e espaços. Ele passa se aparecer como trecho do texto ou se pelo menos 80% das palavras significativas dele aparecerem perto umas das outras. Os que não passam não são removidos: a revisão mostra quantos são e destaca cada um, e o destaque some quando o tópico é editado.
 5. **Fallback:** se a IA falhar (timeout, erro HTTP, resposta inválida, truncada ou vazia), o app usa a leitura padrão no mesmo texto e avisa na revisão.
 
