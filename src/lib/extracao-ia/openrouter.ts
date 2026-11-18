@@ -49,8 +49,24 @@ type Config = {
   chave: string;
   modelo: string;
   reservas: string[];
+  /** Esforço de raciocínio (`reasoning.effort`); `null` usa o padrão do modelo. */
+  raciocinio: EsforcoRaciocinio | null;
   urlApp: string;
 };
+
+export const ESFORCOS_RACIOCINIO = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+] as const;
+export type EsforcoRaciocinio = (typeof ESFORCOS_RACIOCINIO)[number];
+
+function lerRaciocinio(): EsforcoRaciocinio | null {
+  const valor = process.env.OPENROUTER_REASONING_EFFORT?.trim().toLowerCase();
+  return ESFORCOS_RACIOCINIO.find((e) => e === valor) ?? null;
+}
 
 /** Lê a configuração na hora da chamada; `null` se a feature estiver desligada. */
 export function lerConfig(): Config | null {
@@ -61,7 +77,13 @@ export function lerConfig(): Config | null {
     .split(",")
     .map((m) => m.trim())
     .filter((m) => m && m !== modelo);
-  return { chave, modelo, reservas, urlApp: urlDoApp() };
+  return {
+    chave,
+    modelo,
+    reservas,
+    raciocinio: lerRaciocinio(),
+    urlApp: urlDoApp(),
+  };
 }
 
 export function iaDisponivel() {
@@ -86,6 +108,9 @@ export function montarCorpo(
     }),
     messages: mensagens,
     temperature: temperatura,
+    // Modelos de raciocínio "pensam" antes de responder, e esses tokens contam
+    // no `max_tokens` e no tempo. Para copiar tópicos, raciocínio não ajuda.
+    ...(config.raciocinio && { reasoning: { effort: config.raciocinio } }),
     max_tokens: MAX_TOKENS,
     response_format: {
       type: "json_schema",
