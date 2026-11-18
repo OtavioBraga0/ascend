@@ -49,6 +49,7 @@ beforeEach(() => {
   vi.stubEnv("OPENROUTER_API_KEY", "sk-teste");
   vi.stubEnv("OPENROUTER_MODEL", "google/gemini-2.5-flash");
   vi.stubEnv("OPENROUTER_FALLBACK_MODELS", "");
+  vi.stubEnv("OPENROUTER_REASONING_EFFORT", "");
   vi.stubEnv("AUTH_URL", "https://ascend.exemplo.com");
   vi.stubGlobal("fetch", fetchMock);
   vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -112,6 +113,19 @@ describe("requisição", () => {
       provider: { require_parameters: true },
       plugins: [{ id: "response-healing" }],
     });
+  });
+
+  it("manda o esforço de raciocínio só quando configurado", async () => {
+    fetchMock.mockResolvedValue(respostaApi(respostaValida));
+    vi.stubEnv("OPENROUTER_REASONING_EFFORT", " None ");
+    await chamarOpenRouter({ mensagens });
+    expect(requisicao().corpo.reasoning).toEqual({ effort: "none" });
+
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(respostaApi(respostaValida));
+    vi.stubEnv("OPENROUTER_REASONING_EFFORT", "turbo");
+    await chamarOpenRouter({ mensagens });
+    expect(requisicao().corpo).not.toHaveProperty("reasoning");
   });
 
   it("só manda `models` quando há modelos reserva", async () => {
