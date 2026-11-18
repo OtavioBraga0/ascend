@@ -234,7 +234,7 @@ export function ImportarEdital({
       </div>
       {lendoComIa && (
         <p role="status" className="text-center text-sm text-muted-foreground">
-          Lendo o edital… isso pode levar até 1 minuto.
+          Lendo o edital… isso pode levar até 2 minutos.
         </p>
       )}
       <p className="text-center text-sm">

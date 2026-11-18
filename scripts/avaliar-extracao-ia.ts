@@ -13,9 +13,9 @@ import "dotenv/config";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { chamarOpenRouter, iaDisponivel } from "@/lib/extracao-ia/openrouter";
+import { extrairEdital } from "@/lib/extracao-ia/extrair";
+import { iaDisponivel } from "@/lib/extracao-ia/openrouter";
 import { posProcessar } from "@/lib/extracao-ia/pos-processar";
-import { montarMensagens } from "@/lib/extracao-ia/prompt";
 import { prepararTexto } from "@/lib/extracao-ia/texto";
 import { parseEdital, type MateriaParseada } from "@/lib/parser-edital";
 
@@ -47,22 +47,22 @@ async function avaliar(arquivo: string) {
   }
 
   const inicio = performance.now();
-  const chamada = await chamarOpenRouter({
-    mensagens: montarMensagens(texto.texto),
-  });
+  const chamada = await extrairEdital(texto.texto);
   const segundos = ((performance.now() - inicio) / 1000).toFixed(1);
   const uso = chamada.uso
     ? `${chamada.uso.tokensEntrada ?? "?"} tokens de entrada, ${chamada.uso.tokensSaida ?? "?"} de saída, US$ ${chamada.uso.custoUsd ?? "?"}`
     : "uso não informado";
 
   if (!chamada.ok) {
-    console.log(`  IA: erro ${chamada.erro} em ${segundos} s (${uso})`);
+    console.log(
+      `  IA: erro ${chamada.erro} em ${segundos} s, ${chamada.partes} parte(s) (${uso})`,
+    );
     return;
   }
 
   const resultado = posProcessar(chamada.resposta, texto.texto);
   console.log(
-    `  IA (${chamada.modelo}): ${contar(resultado.estrutura)} em ${segundos} s (${uso})`,
+    `  IA (${chamada.modelos.join(", ")}): ${contar(resultado.estrutura)} em ${segundos} s, ${chamada.partes} parte(s) (${uso})`,
   );
 
   const parser = itens(doParser);

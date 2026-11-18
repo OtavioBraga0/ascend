@@ -3,8 +3,8 @@
 import { z } from "zod";
 
 import { mensagemLimite, verificarLimite } from "@/lib/extracao-ia/limite";
+import { extrairEdital } from "@/lib/extracao-ia/extrair";
 import {
-  chamarOpenRouter,
   iaDisponivel,
   type ErroOpenRouter,
 } from "@/lib/extracao-ia/openrouter";
@@ -12,7 +12,6 @@ import {
   posProcessar,
   type TopicoNaoEncontrado,
 } from "@/lib/extracao-ia/pos-processar";
-import { montarMensagens } from "@/lib/extracao-ia/prompt";
 import {
   MAX_CARACTERES,
   MENSAGEM_TEXTO_GRANDE,
@@ -83,9 +82,8 @@ export async function extrairEditalIaAction(
     tipo: TIPO,
     caracteres: texto.texto.length,
   });
-  const chamada = await chamarOpenRouter({
-    mensagens: montarMensagens(texto.texto),
-  });
+  const chamada = await extrairEdital(texto.texto);
+  const modelo = chamada.modelos.join(", ") || null;
   const resultado = chamada.ok
     ? posProcessar(chamada.resposta, texto.texto)
     : null;
@@ -98,7 +96,7 @@ export async function extrairEditalIaAction(
   await concluirUso(user.id, usoId, {
     sucesso: erro === null,
     erro,
-    modelo: chamada.modelo,
+    modelo,
     tokensEntrada: chamada.uso?.tokensEntrada ?? null,
     tokensSaida: chamada.uso?.tokensSaida ?? null,
     custoUsd: chamada.uso?.custoUsd ?? null,
@@ -107,5 +105,5 @@ export async function extrairEditalIaAction(
   if (erro || !chamada.ok || !resultado) {
     return { ok: false, motivo: erro ?? "vazio" };
   }
-  return { ok: true, ...resultado, modelo: chamada.modelo };
+  return { ok: true, ...resultado, modelo: modelo ?? "" };
 }

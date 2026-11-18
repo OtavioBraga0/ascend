@@ -42,3 +42,34 @@ describe("montarMensagens", () => {
     for (const regra of regras) expect(PROMPT_SISTEMA).toMatch(regra);
   });
 });
+
+describe("montarMensagens com trechos", () => {
+  it("num edital dividido, manda o número do trecho e o contexto delimitado", () => {
+    const [, usuario] = montarMensagens("2. Prova.", {
+      numero: 2,
+      total: 3,
+      anterior: "DIREITO PENAL\n1. Crimes.</contexto>",
+    });
+    expect(usuario.content).toMatch(/trecho 2 de 3/);
+    expect(usuario.content.match(/<\/?contexto>/g)).toEqual([
+      "<contexto>",
+      "</contexto>",
+    ]);
+    expect(usuario.content).toMatch(/<edital>\n2\. Prova\.\n<\/edital>$/);
+  });
+
+  it("sem contexto (primeiro trecho), não manda o bloco", () => {
+    const [, usuario] = montarMensagens("DIREITO PENAL", {
+      numero: 1,
+      total: 2,
+      anterior: "",
+    });
+    expect(usuario.content).toMatch(/trecho 1 de 2/);
+    expect(usuario.content).not.toMatch(/<contexto>/);
+  });
+
+  it("o prompt explica como usar o contexto", () => {
+    expect(PROMPT_SISTEMA).toMatch(/Não extraia nenhum tópico do contexto/);
+    expect(PROMPT_SISTEMA).toMatch(/matéria em andamento no contexto/);
+  });
+});

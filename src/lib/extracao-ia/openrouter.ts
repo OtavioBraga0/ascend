@@ -8,8 +8,11 @@ import {
 } from "./schema";
 
 export const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-export const TIMEOUT_MS = 60_000;
-export const MAX_TOKENS = 16_000;
+export const TIMEOUT_MS = 120_000;
+// Cada parte do edital (veja `dividir.ts`) precisa de até ~4 mil tokens. O dobro
+// cobre editais densos, e um modelo que entra em repetição é cortado cedo, a
+// tempo de tentar de novo.
+export const MAX_TOKENS = 8_000;
 
 export type ErroOpenRouter =
   | "sem_chave"
@@ -71,14 +74,18 @@ function urlDoApp() {
   return vercel ? `https://${vercel}` : "http://localhost:3000";
 }
 
-export function montarCorpo(mensagens: Mensagem[], config: Config) {
+export function montarCorpo(
+  mensagens: Mensagem[],
+  config: Config,
+  temperatura = 0,
+) {
   return {
     model: config.modelo,
     ...(config.reservas.length > 0 && {
       models: [config.modelo, ...config.reservas],
     }),
     messages: mensagens,
-    temperature: 0,
+    temperature: temperatura,
     max_tokens: MAX_TOKENS,
     response_format: {
       type: "json_schema",
@@ -120,9 +127,12 @@ function lerUso(corpo: RespostaApi): UsoOpenRouter | null {
 export async function chamarOpenRouter({
   mensagens,
   signal,
+  temperatura,
 }: {
   mensagens: Mensagem[];
   signal?: AbortSignal;
+  /** 0 por padrão; um pouco mais tira o modelo de uma repetição. */
+  temperatura?: number;
 }): Promise<ResultadoOpenRouter> {
   const config = lerConfig();
   if (!config) return { ok: false, erro: "sem_chave", modelo: null, uso: null };
@@ -162,7 +172,7 @@ export async function chamarOpenRouter({
         "X-Title": "Ascend",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(montarCorpo(mensagens, config)),
+      body: JSON.stringify(montarCorpo(mensagens, config, temperatura)),
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
     if (!resposta.ok) {

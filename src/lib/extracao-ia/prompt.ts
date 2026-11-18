@@ -4,6 +4,8 @@ export type Mensagem = { role: "system" | "user"; content: string };
 
 export const ABRE_EDITAL = "<edital>";
 export const FECHA_EDITAL = "</edital>";
+export const ABRE_CONTEXTO = "<contexto>";
+export const FECHA_CONTEXTO = "</contexto>";
 
 // As regras seguem as convenções de `parser-edital.ts` (veja os fixtures em
 // `src/lib/__fixtures__/`), para a revisão receber o mesmo formato das duas formas.
@@ -23,20 +25,44 @@ Regras:
 9. Se um tópico não pertence a nenhuma matéria, coloque-o na matéria "${SEM_MATERIA}".
 10. Não repita o mesmo tópico na mesma matéria.
 11. Se o texto não tiver conteúdo programático, devolva "materias" vazio e explique em "avisos".
-12. Use "avisos" só para observações curtas e úteis sobre o texto, em português (por exemplo, partes que foram ignoradas ou trechos ilegíveis). Pode ficar vazio.`;
+12. Use "avisos" só para observações curtas e úteis sobre o texto, em português (por exemplo, partes que foram ignoradas ou trechos ilegíveis). Pode ficar vazio.
 
-/** Tira do texto qualquer `<edital>`/`</edital>`, que fecharia o delimitador antes da hora. */
+Editais longos chegam divididos em trechos, extraídos separadamente. Nesse caso, a mensagem traz também, entre ${ABRE_CONTEXTO} e ${FECHA_CONTEXTO}, o final do trecho anterior:
+13. O contexto serve só para saber qual matéria estava em andamento. Não extraia nenhum tópico do contexto: extraia apenas o que está entre ${ABRE_EDITAL} e ${FECHA_EDITAL}.
+14. Se o trecho começar com tópicos antes do primeiro nome de matéria, eles pertencem à matéria em andamento no contexto. Use o nome dela exatamente como aparece no contexto, em vez de "${SEM_MATERIA}".
+15. Não comente nos avisos a divisão em trechos nem o começo ou o fim cortado do trecho.`;
+
+/** Tira do texto os delimitadores, que fechariam um bloco antes da hora. */
 function semDelimitadores(texto: string) {
-  return texto.replace(/<\s*\/?\s*edital\s*>/gi, " ");
+  return texto.replace(/<\s*\/?\s*(edital|contexto)\s*>/gi, " ");
 }
 
-/** Mensagens da extração: regras no sistema, edital delimitado no usuário. */
-export function montarMensagens(texto: string): Mensagem[] {
+/** Em que trecho do edital dividido esta mensagem está. */
+export type Trecho = { numero: number; total: number; anterior: string };
+
+/**
+ * Mensagens da extração: regras no sistema, edital delimitado no usuário. Num
+ * edital dividido, o trecho vem com o final do anterior como contexto.
+ */
+export function montarMensagens(texto: string, trecho?: Trecho): Mensagem[] {
+  const edital = `${ABRE_EDITAL}\n${semDelimitadores(texto)}\n${FECHA_EDITAL}`;
+  if (!trecho || trecho.total <= 1) {
+    return [
+      { role: "system", content: PROMPT_SISTEMA },
+      {
+        role: "user",
+        content: `Extraia o conteúdo programático do edital abaixo.\n\n${edital}`,
+      },
+    ];
+  }
+  const contexto = trecho.anterior.trim()
+    ? `Final do trecho anterior, só como contexto:\n\n${ABRE_CONTEXTO}\n${semDelimitadores(trecho.anterior)}\n${FECHA_CONTEXTO}\n\n`
+    : "";
   return [
     { role: "system", content: PROMPT_SISTEMA },
     {
       role: "user",
-      content: `Extraia o conteúdo programático do edital abaixo.\n\n${ABRE_EDITAL}\n${semDelimitadores(texto)}\n${FECHA_EDITAL}`,
+      content: `Este é o trecho ${trecho.numero} de ${trecho.total} de um edital. ${contexto}Extraia o conteúdo programático do trecho abaixo.\n\n${edital}`,
     },
   ];
 }

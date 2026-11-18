@@ -11,8 +11,8 @@ import { getEstruturaEdital } from "@/server/data/edital";
 
 export const metadata: Metadata = { title: "Importar edital · Ascend" };
 
-// A extração com IA (server action desta página) pode levar até 60 s.
-export const maxDuration = 90;
+// A extração com IA (server action desta página) pode levar até 120 s.
+export const maxDuration = 150;
 
 export default function ImportarPage({
   params,
